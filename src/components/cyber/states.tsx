@@ -42,9 +42,9 @@ export function InputState({ onScan }: { onScan: (v: string) => void }) {
         Win <span className="text-neon text-glow">the Exchange.</span>
       </h1>
       <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-        Paste any message — a boss, a client, an ex, or whoever’s tearing you apart in the
-        comments. The radar shows what they’re actually doing, then writes the reply that
-        ends it.
+        Paste a message from your boss, client, partner, or ex — or from whoever’s tearing
+        you apart in the comments. Our AI radar will detect gaslighting, bluffs, and hidden
+        agendas — then writes the reply that ends it.
       </p>
 
       <Panel className="mt-8 p-3">
@@ -61,7 +61,7 @@ export function InputState({ onScan }: { onScan: (v: string) => void }) {
             onBlur={() => setFocused(false)}
             onChange={(e) => setValue(e.target.value)}
             rows={7}
-            placeholder="[Paste message, comment or thread...]"
+            placeholder="[Paste intercepted transmission or comment thread...]"
             className="w-full resize-none bg-transparent px-1 font-mono text-sm text-neon caret-transparent outline-none placeholder:text-muted-foreground/60"
           />
           {!focused && value.length === 0 && (
