@@ -38,10 +38,13 @@ export function InputState({ onScan }: { onScan: (v: string) => void }) {
       </div>
       <h1 className="font-mono text-4xl font-bold leading-tight text-foreground sm:text-5xl">
         Decode <span className="text-neon text-glow">Hidden Motives.</span>
+        <br />
+        Win <span className="text-neon text-glow">the Exchange.</span>
       </h1>
       <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-        Paste a message from your boss, client, or partner. Our AI radar will detect gaslighting,
-        bluffs, and hidden agendas.
+        Paste any message — a boss, a client, an ex, or whoever’s tearing you apart in the
+        comments. The radar shows what they’re actually doing, then writes the reply that
+        ends it.
       </p>
 
       <Panel className="mt-8 p-3">
@@ -58,7 +61,7 @@ export function InputState({ onScan }: { onScan: (v: string) => void }) {
             onBlur={() => setFocused(false)}
             onChange={(e) => setValue(e.target.value)}
             rows={7}
-            placeholder="[Paste intercepted transmission here...]"
+            placeholder="[Paste message, comment or thread...]"
             className="w-full resize-none bg-transparent px-1 font-mono text-sm text-neon caret-transparent outline-none placeholder:text-muted-foreground/60"
           />
           {!focused && value.length === 0 && (
@@ -73,6 +76,10 @@ export function InputState({ onScan }: { onScan: (v: string) => void }) {
       >
         <Crosshair className="h-4 w-4" /> Initialize Scan
       </button>
+
+      <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-[0.15em] text-neon/50">
+        No shouting. No insults. You just stop losing.
+      </p>
 
       <div className="mt-5 grid grid-cols-3 gap-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
         <span className="flex items-center gap-1">
