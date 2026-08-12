@@ -124,7 +124,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      spend_credit_and_unlock: {
+        Args: { p_scan: string; p_token: string; p_user: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
