@@ -111,3 +111,39 @@ export const unlockScan = createServerFn({ method: "POST" })
 
     return buildTeaser(row.id, row.access_token, result, true);
   });
+
+export type ScanHistoryItem = {
+  id: string;
+  token: string;
+  context: string;
+  headline: string;
+  threat_level: string;
+  pattern_count: number;
+  created_at: string;
+};
+
+export const listMyScans = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<ScanHistoryItem[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows } = await supabaseAdmin
+      .from("scans")
+      .select("id, access_token, context, result, created_at")
+      .eq("user_id", context.userId)
+      .eq("unlocked", true)
+      .order("created_at", { ascending: false })
+      .limit(100);
+
+    return (rows ?? []).map((row) => {
+      const result = (row.result ?? {}) as unknown as ScanResult;
+      return {
+        id: row.id,
+        token: row.access_token,
+        context: row.context,
+        headline: result.headline ?? "Decoded transmission",
+        threat_level: result.threat_level ?? "elevated",
+        pattern_count: result.patterns?.length ?? 0,
+        created_at: row.created_at,
+      };
+    });
+  });

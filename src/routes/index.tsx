@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence } from "motion/react";
-import { LogOut, Radar as RadarIcon, X, Zap } from "lucide-react";
+import { History, LogOut, Radar as RadarIcon, X, Zap } from "lucide-react";
 import { Backdrop } from "@/components/cyber/Frame";
 import { InputState, ScanningState, PaywallState, UnlockedState } from "@/components/cyber/states";
 import { PackCheckout } from "@/components/cyber/Checkout";
@@ -45,6 +45,7 @@ function Index() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [checkoutPack, setCheckoutPack] = useState<string | null>(null);
+  const [autoUnlock, setAutoUnlock] = useState(false);
   const restored = useRef(false);
 
   const refreshCredits = useCallback(async () => {
@@ -94,6 +95,7 @@ function Index() {
         await new Promise((r) => setTimeout(r, 1500));
       }
       setBusy(false);
+      setAutoUnlock(true);
     })();
   }, [authLoading, session, refreshCredits]);
 
@@ -145,6 +147,15 @@ function Index() {
     }
   };
 
+  // Paid users land straight in the full report.
+  useEffect(() => {
+    if (!autoUnlock || busy) return;
+    if (!teaser || teaser.unlocked || credits < 1) return;
+    setAutoUnlock(false);
+    void doUnlock();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoUnlock, busy, teaser, credits]);
+
   const reset = () => {
     sessionStorage.removeItem(STORE_KEY);
     setTeaser(null);
@@ -173,6 +184,13 @@ function Index() {
                 <span className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest text-amber">
                   <Zap className="h-3 w-3" /> {credits}
                 </span>
+                <button
+                  onClick={() => navigate({ to: "/history" })}
+                  aria-label="My decodes"
+                  className="rounded-sm border border-border/60 p-1.5 text-muted-foreground/60 transition-colors hover:text-neon"
+                >
+                  <History className="h-3.5 w-3.5" />
+                </button>
                 <button
                   onClick={() => supabase.auth.signOut()}
                   aria-label="Sign out"

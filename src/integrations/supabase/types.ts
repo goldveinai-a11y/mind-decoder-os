@@ -45,6 +45,7 @@ export type Database = {
           credits: number
           id: string
           pack: string
+          payment_intent_id: string | null
           provider_session_id: string | null
           status: string
           updated_at: string
@@ -56,6 +57,7 @@ export type Database = {
           credits: number
           id?: string
           pack: string
+          payment_intent_id?: string | null
           provider_session_id?: string | null
           status?: string
           updated_at?: string
@@ -67,6 +69,7 @@ export type Database = {
           credits?: number
           id?: string
           pack?: string
+          payment_intent_id?: string | null
           provider_session_id?: string | null
           status?: string
           updated_at?: string
@@ -124,14 +127,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      grant_purchased_credits: {
-        Args: {
-          p_amount_cents: number
-          p_credits: number
-          p_pack: string
-          p_session: string
-          p_user: string
-        }
+      grant_purchased_credits:
+        | {
+            Args: {
+              p_amount_cents: number
+              p_credits: number
+              p_pack: string
+              p_session: string
+              p_user: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_amount_cents: number
+              p_credits: number
+              p_pack: string
+              p_payment_intent?: string
+              p_session: string
+              p_user: string
+            }
+            Returns: string
+          }
+      revoke_refunded_credits: {
+        Args: { p_payment_intent: string }
         Returns: string
       }
       spend_credit_and_unlock: {
