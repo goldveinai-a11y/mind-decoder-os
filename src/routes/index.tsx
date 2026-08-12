@@ -6,6 +6,7 @@ import { Backdrop } from "@/components/cyber/Frame";
 import { InputState, ScanningState, PaywallState, UnlockedState } from "@/components/cyber/states";
 import { PackCheckout } from "@/components/cyber/Checkout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { SiteFooter } from "@/components/cyber/Legal";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { getAccount, getScan, runScan, unlockScan } from "@/lib/scan.functions";
@@ -230,6 +231,8 @@ function Index() {
           {stage === "unlocked" && teaser && <UnlockedState teaser={teaser} onReset={reset} />}
         </AnimatePresence>
       </main>
+
+      <SiteFooter />
 
       {checkoutPack && (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-background/95 p-4 backdrop-blur-sm">
