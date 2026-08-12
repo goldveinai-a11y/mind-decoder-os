@@ -41,7 +41,7 @@ export const runScan = createServerFn({ method: "POST" })
       });
       await supabaseAdmin
         .from("scans")
-        .update({ result: result as unknown as Record<string, unknown>, status: "done" })
+        .update({ result: result as never, status: "done" })
         .eq("id", row.id);
       return buildTeaser(row.id, token, result, false);
     } catch (e) {
@@ -101,13 +101,13 @@ export const unlockScan = createServerFn({ method: "POST" })
       return buildTeaser(row.id, row.access_token, result, true);
     }
 
-    const { data: spent } = await supabaseAdmin
-      .from("profiles")
-      .update({ credits: -1 } as never)
-      .eq("id", context.userId)
-      .select("credits")
-      .maybeSingle();
-    void spent;
+    const { data: outcome, error: rpcError } = await supabaseAdmin.rpc(
+      "spend_credit_and_unlock",
+      { p_scan: row.id, p_token: row.access_token, p_user: context.userId },
+    );
+    if (rpcError) throw new Error("Could not unlock the report.");
+    if (outcome === "no_credits") throw new Error("NO_DECODES");
+    if (outcome !== "ok") throw new Error("Report not found.");
 
-    throw new Error("NOT_IMPLEMENTED");
+    return buildTeaser(row.id, row.access_token, result, true);
   });
