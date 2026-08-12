@@ -2,13 +2,18 @@ import { createServerFn } from "@tanstack/react-start";
 import type Stripe from "stripe";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createStripeClient, getStripeErrorMessage, type StripeEnv } from "./stripe.server";
-import { PACK_PRICE_IDS, packById, resolveOrCreateCustomer } from "./payments.server";
+import {
+  PACK_PRICE_IDS,
+  packById,
+  resolveOrCreateCustomer,
+  sanitizeReturnUrl,
+} from "./payments.server";
 
 export const createPackCheckout = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { pack: string; returnUrl: string; environment: StripeEnv }) => {
     packById(data.pack);
-    return data;
+    return { ...data, returnUrl: sanitizeReturnUrl(data.returnUrl) };
   })
   .handler(async ({ data, context }): Promise<{ clientSecret: string } | { error: string }> => {
     try {
