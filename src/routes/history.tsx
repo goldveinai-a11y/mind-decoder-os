@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { AlertTriangle, ArrowLeft, Radar as RadarIcon } from "lucide-react";
 import { Backdrop, Panel } from "@/components/cyber/Frame";
+import { SiteFooter } from "@/components/cyber/Legal";
 import { UnlockedState } from "@/components/cyber/states";
 import { useAuth } from "@/hooks/useAuth";
 import { getScan, listMyScans, type ScanHistoryItem } from "@/lib/scan.functions";
@@ -119,6 +120,7 @@ function History() {
           </section>
         )}
       </main>
+      <SiteFooter />
     </div>
   );
 }
