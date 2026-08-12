@@ -14,7 +14,111 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string
+          credits: number
+          email: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credits?: number
+          email?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          email?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      purchases: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          credits: number
+          id: string
+          pack: string
+          provider_session_id: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          credits: number
+          id?: string
+          pack: string
+          provider_session_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          credits?: number
+          id?: string
+          pack?: string
+          provider_session_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      scans: {
+        Row: {
+          access_token: string
+          context: string
+          created_at: string
+          error: string | null
+          id: string
+          input_image_url: string | null
+          input_text: string | null
+          result: Json | null
+          status: string
+          unlocked: boolean
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          access_token: string
+          context?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          input_image_url?: string | null
+          input_text?: string | null
+          result?: Json | null
+          status?: string
+          unlocked?: boolean
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          access_token?: string
+          context?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          input_image_url?: string | null
+          input_text?: string | null
+          result?: Json | null
+          status?: string
+          unlocked?: boolean
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
