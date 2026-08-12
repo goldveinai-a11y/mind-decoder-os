@@ -1,6 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { verifyWebhook, type StripeEnv } from "@/lib/stripe.server";
 
+async function revokeCredits(charge: Record<string, unknown>) {
+  const paymentIntent =
+    typeof charge["payment_intent"] === "string" ? (charge["payment_intent"] as string) : null;
+  if (!paymentIntent) return;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { error } = await supabaseAdmin.rpc("revoke_refunded_credits", {
+    p_payment_intent: paymentIntent,
+  });
+  if (error) console.error("payments webhook: revoke failed", error);
+}
+
 async function grantCredits(session: Record<string, unknown>) {
   const metadata = (session["metadata"] ?? {}) as Record<string, string | undefined>;
   const userId = metadata["userId"];
@@ -8,6 +19,8 @@ async function grantCredits(session: Record<string, unknown>) {
   const pack = metadata["pack"] ?? "unknown";
   const sessionId = String(session["id"] ?? "");
   const amount = Number(session["amount_total"] ?? 0);
+  const paymentIntent =
+    typeof session["payment_intent"] === "string" ? (session["payment_intent"] as string) : null;
 
   if (!userId || !credits || !sessionId) {
     console.error("payments webhook: missing metadata", { userId, credits, sessionId });
@@ -21,6 +34,7 @@ async function grantCredits(session: Record<string, unknown>) {
     p_credits: credits,
     p_amount_cents: amount,
     p_session: sessionId,
+    p_payment_intent: paymentIntent,
   });
   if (error) console.error("payments webhook: grant failed", error);
 }
@@ -43,6 +57,10 @@ export const Route = createFileRoute("/api/public/payments/webhook")({
               break;
             case "checkout.session.async_payment_succeeded":
               await grantCredits(object);
+              break;
+            case "charge.refunded":
+            case "charge.dispute.created":
+              await revokeCredits(object);
               break;
             default:
               break;
