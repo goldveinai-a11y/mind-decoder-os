@@ -124,6 +124,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      grant_purchased_credits: {
+        Args: {
+          p_amount_cents: number
+          p_credits: number
+          p_pack: string
+          p_session: string
+          p_user: string
+        }
+        Returns: string
+      }
       spend_credit_and_unlock: {
         Args: { p_scan: string; p_token: string; p_user: string }
         Returns: string
