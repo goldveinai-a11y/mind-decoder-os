@@ -13,6 +13,38 @@ export function packById(id: string) {
   return pack;
 }
 
+const ALLOWED_RETURN_HOSTS = [
+  "unbluff.com",
+  "www.unbluff.com",
+  "mind-decoder-os.lovable.app",
+  "localhost",
+];
+
+function isAllowedHost(hostname: string): boolean {
+  return (
+    ALLOWED_RETURN_HOSTS.includes(hostname) ||
+    hostname.endsWith(".lovable.app") ||
+    hostname.endsWith(".lovableproject.com")
+  );
+}
+
+/** Only allow post-payment redirects back to this app's own origins. */
+export function sanitizeReturnUrl(rawUrl: string): string {
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    throw new Error("Invalid return URL");
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") {
+    throw new Error("Invalid return URL");
+  }
+  if (!isAllowedHost(url.hostname)) {
+    throw new Error("Invalid return URL");
+  }
+  return url.toString();
+}
+
 export async function resolveOrCreateCustomer(
   stripe: Stripe,
   options: { email?: string | undefined; userId?: string | undefined },
