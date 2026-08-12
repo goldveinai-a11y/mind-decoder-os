@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RefundsRouteImport } from './routes/refunds'
@@ -25,6 +26,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -57,6 +63,7 @@ const ApiPublicPaymentsWebhookRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/contact': typeof ContactRoute
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
   '/refunds': typeof RefundsRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/contact': typeof ContactRoute
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
   '/refunds': typeof RefundsRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/contact': typeof ContactRoute
   '/history': typeof HistoryRoute
   '/privacy': typeof PrivacyRoute
   '/refunds': typeof RefundsRoute
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/contact'
     | '/history'
     | '/privacy'
     | '/refunds'
@@ -96,6 +106,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/contact'
     | '/history'
     | '/privacy'
     | '/refunds'
@@ -105,6 +116,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/contact'
     | '/history'
     | '/privacy'
     | '/refunds'
@@ -115,6 +127,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  ContactRoute: typeof ContactRoute
   HistoryRoute: typeof HistoryRoute
   PrivacyRoute: typeof PrivacyRoute
   RefundsRoute: typeof RefundsRoute
@@ -136,6 +149,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/history': {
@@ -179,6 +199,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  ContactRoute: ContactRoute,
   HistoryRoute: HistoryRoute,
   PrivacyRoute: PrivacyRoute,
   RefundsRoute: RefundsRoute,
