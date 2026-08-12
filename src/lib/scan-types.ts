@@ -1,8 +1,8 @@
 export const SCAN_CONTEXTS = [
-  { id: "work", label: "Работа" },
-  { id: "client", label: "Клиент" },
-  { id: "relationship", label: "Отношения" },
-  { id: "public", label: "Публичный спор" },
+  { id: "work", label: "Work / boss" },
+  { id: "client", label: "Client / deal" },
+  { id: "relationship", label: "Partner / ex" },
+  { id: "public", label: "Public fight" },
 ] as const;
 
 export type ScanContext = (typeof SCAN_CONTEXTS)[number]["id"];
@@ -43,9 +43,9 @@ export type ScanTeaser = {
 };
 
 export const CREDIT_PACKS = [
-  { id: "single", credits: 1, amountCents: 499, label: "1 декод", note: "разовый" },
-  { id: "ten", credits: 10, amountCents: 1499, label: "10 декодов", note: "выгодно" },
-  { id: "fifty", credits: 50, amountCents: 3999, label: "50 декодов", note: "для затяжной войны" },
+  { id: "single", credits: 1, amountCents: 499, label: "1 decode", note: "one-off" },
+  { id: "ten", credits: 10, amountCents: 1499, label: "10 decodes", note: "best value" },
+  { id: "fifty", credits: 50, amountCents: 3999, label: "50 decodes", note: "long war" },
 ] as const;
 
 export type CreditPackId = (typeof CREDIT_PACKS)[number]["id"];
