@@ -111,7 +111,7 @@ function Index() {
         data: {
           context: payload.context,
           text: payload.text,
-          imageDataUrl: payload.imageDataUrl ?? undefined,
+          ...(payload.imageDataUrl ? { imageDataUrl: payload.imageDataUrl } : {}),
         },
       });
       setScanDone(true);
