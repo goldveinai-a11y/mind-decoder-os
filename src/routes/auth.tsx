@@ -4,6 +4,7 @@ import { Lock, Mail, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
 import { Backdrop, Panel } from "@/components/cyber/Frame";
+import { SiteFooter } from "@/components/cyber/Legal";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/auth")({
@@ -141,6 +142,7 @@ function AuthPage() {
           </button>
         </Panel>
       </section>
+      <SiteFooter />
     </div>
   );
 }
