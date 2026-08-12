@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import {
   Activity,
   AlertTriangle,
@@ -8,15 +8,18 @@ import {
   Crosshair,
   Eye,
   Fingerprint,
+  ImagePlus,
   Lock,
   Radar as RadarIcon,
   ShieldCheck,
   Swords,
   Terminal,
   UserX,
+  X,
 } from "lucide-react";
 import { Panel } from "./Frame";
 import { Radar } from "./Radar";
+import { SCAN_CONTEXTS, CREDIT_PACKS, type ScanContext, type ScanTeaser } from "@/lib/scan-types";
 
 const fade = {
   initial: { opacity: 0, y: 12 },
@@ -27,9 +30,42 @@ const fade = {
 
 /* ---------------- STATE 1 ---------------- */
 
-export function InputState({ onScan }: { onScan: (v: string) => void }) {
+export function InputState({
+  onScan,
+  error,
+}: {
+  onScan: (payload: { text: string; context: ScanContext; imageDataUrl: string | null }) => void;
+  error?: string | null;
+}) {
   const [value, setValue] = useState("");
   const [focused, setFocused] = useState(false);
+  const [context, setContext] = useState<ScanContext>("work");
+  const [image, setImage] = useState<{ name: string; dataUrl: string } | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const pickFile = (file: File | undefined) => {
+    if (!file) return;
+    if (file.size > 4 * 1024 * 1024) {
+      setLocalError("Screenshot is too large (max 4 MB).");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setLocalError(null);
+      setImage({ name: file.name, dataUrl: String(reader.result) });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const submit = () => {
+    if (!value.trim() && !image) {
+      setLocalError("Paste a message or attach a screenshot.");
+      return;
+    }
+    setLocalError(null);
+    onScan({ text: value, context, imageDataUrl: image?.dataUrl ?? null });
+  };
 
   return (
     <motion.section key="input" {...fade} className="mx-auto w-full max-w-2xl px-4 pb-20 pt-10">
@@ -47,7 +83,23 @@ export function InputState({ onScan }: { onScan: (v: string) => void }) {
         agendas — then writes the reply that ends it.
       </p>
 
-      <Panel className="mt-8 p-3">
+      <div className="mt-7 flex flex-wrap gap-2">
+        {SCAN_CONTEXTS.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => setContext(c.id)}
+            className={`rounded-sm border px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest transition-colors ${
+              context === c.id
+                ? "border-neon bg-neon/15 text-neon"
+                : "border-border text-muted-foreground hover:border-neon/40 hover:text-neon"
+            }`}
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
+
+      <Panel className="mt-4 p-3">
         <div className="mb-2 flex items-center justify-between border-b border-neon/15 px-1 pb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <Terminal className="h-3 w-3 text-neon" /> input_buffer
@@ -61,6 +113,7 @@ export function InputState({ onScan }: { onScan: (v: string) => void }) {
             onBlur={() => setFocused(false)}
             onChange={(e) => setValue(e.target.value)}
             rows={7}
+            maxLength={8000}
             placeholder="[Paste intercepted transmission or comment thread...]"
             className="w-full resize-none bg-transparent px-1 font-mono text-sm text-neon caret-transparent outline-none placeholder:text-muted-foreground/60"
           />
@@ -68,10 +121,38 @@ export function InputState({ onScan }: { onScan: (v: string) => void }) {
             <span className="caret-blink pointer-events-none absolute left-1 top-0 h-5 w-2 bg-neon/80" />
           )}
         </div>
+
+        <div className="mt-2 flex items-center gap-2 border-t border-neon/15 pt-3">
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={(e) => pickFile(e.target.files?.[0])}
+          />
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="flex items-center gap-1.5 rounded-sm border border-border px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground transition-colors hover:border-neon/40 hover:text-neon"
+          >
+            <ImagePlus className="h-3 w-3" /> attach screenshot
+          </button>
+          {image && (
+            <span className="flex min-w-0 items-center gap-1.5 font-mono text-[10px] text-neon/80">
+              <span className="truncate">{image.name}</span>
+              <button onClick={() => setImage(null)} aria-label="Remove screenshot">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+        </div>
       </Panel>
 
+      {(localError || error) && (
+        <p className="mt-3 font-mono text-[11px] text-alert">{localError ?? error}</p>
+      )}
+
       <button
-        onClick={() => onScan(value)}
+        onClick={submit}
         className="pulse-neon mt-6 flex w-full items-center justify-center gap-2 rounded-sm border border-neon bg-neon/10 px-6 py-4 font-mono text-sm font-bold uppercase tracking-[0.2em] text-neon transition-colors hover:bg-neon/20 active:scale-[0.99]"
       >
         <Crosshair className="h-4 w-4" /> Initialize Scan
@@ -101,14 +182,15 @@ export function InputState({ onScan }: { onScan: (v: string) => void }) {
 const LOGS = [
   "> Establishing secure uplink...",
   "> Extracting syntax tree...",
-  "> Tokenizing 1.284 semantic units",
+  "> Tokenizing semantic units",
   "> Bypassing emotional filters...",
   "> Detecting manipulation patterns...",
   "> Mapping power asymmetry vectors",
-  "> Cross-referencing FBI behavioral database...",
-  "> Isolating deception markers [3 hits]",
+  "> Cross-referencing behavioral database...",
+  "> Isolating deception markers",
   "> Profiling sender intent signature",
   "> Compiling counter-strike vectors...",
+  "> Drafting response payloads...",
   "> Encrypting payload. STANDBY.",
 ];
 
@@ -122,18 +204,18 @@ function useTypedLogs(active: boolean) {
     let c = 0;
     let cancelled = false;
     const tick = () => {
-      if (cancelled || i >= LOGS.length) return;
-      const line = LOGS[i]!;
+      if (cancelled) return;
+      const line = LOGS[i % LOGS.length]!;
       c += 2;
       if (c >= line.length) {
-        setLines((p) => [...p, line]);
+        setLines((p) => [...p.slice(-40), line]);
         setPartial("");
         i += 1;
         c = 0;
-        timer = window.setTimeout(tick, 180);
+        timer = window.setTimeout(tick, 420);
       } else {
         setPartial(line.slice(0, c));
-        timer = window.setTimeout(tick, 16);
+        timer = window.setTimeout(tick, 18);
       }
     };
     let timer = window.setTimeout(tick, 200);
@@ -146,7 +228,7 @@ function useTypedLogs(active: boolean) {
   return { lines, partial };
 }
 
-export function ScanningState({ onDone }: { onDone: () => void }) {
+export function ScanningState({ done }: { done: boolean }) {
   const [progress, setProgress] = useState(0);
   const { lines, partial } = useTypedLogs(true);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -155,17 +237,17 @@ export function ScanningState({ onDone }: { onDone: () => void }) {
     const steps: Array<[number, number]> = [
       [40, 900],
       [40, 2200],
-      [89, 3400],
+      [72, 3400],
       [89, 6200],
-      [100, 7700],
+      [94, 12000],
     ];
     const timers = steps.map(([p, t]) => window.setTimeout(() => setProgress(p), t));
-    const done = window.setTimeout(onDone, 8000);
-    return () => {
-      timers.forEach(window.clearTimeout);
-      window.clearTimeout(done);
-    };
-  }, [onDone]);
+    return () => timers.forEach(window.clearTimeout);
+  }, []);
+
+  useEffect(() => {
+    if (done) setProgress(100);
+  }, [done]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -198,8 +280,8 @@ export function ScanningState({ onDone }: { onDone: () => void }) {
           <Terminal className="h-3 w-3 text-neon" /> live_trace
         </div>
         <div ref={scrollRef} className="h-44 overflow-hidden font-mono text-[11px] leading-6">
-          {lines.map((l) => (
-            <div key={l} className="text-neon/80">
+          {lines.map((l, i) => (
+            <div key={`${l}-${i}`} className="text-neon/80">
               {l}
             </div>
           ))}
@@ -217,53 +299,91 @@ export function ScanningState({ onDone }: { onDone: () => void }) {
 
 /* ---------------- STATE 3 ---------------- */
 
-const BLUR_LINES = [
-  "w-full",
-  "w-11/12",
-  "w-10/12",
-  "w-full",
-  "w-9/12",
-  "w-full",
-  "w-8/12",
-  "w-11/12",
-];
+const BLUR_LINES = ["w-full", "w-11/12", "w-10/12", "w-full", "w-9/12", "w-full", "w-8/12"];
 
-export function PaywallState({ onUnlock }: { onUnlock: () => void }) {
+const THREAT_COPY: Record<string, string> = {
+  clear: "No hostile intent detected.",
+  elevated: "Pressure detected.",
+  high: "Threats detected.",
+  critical: "Hostile operator. Threats detected.",
+};
+
+export function PaywallState({
+  teaser,
+  credits,
+  signedIn,
+  onSignIn,
+  onBuy,
+  onUnlock,
+  busy,
+  error,
+}: {
+  teaser: ScanTeaser;
+  credits: number;
+  signedIn: boolean;
+  onSignIn: () => void;
+  onBuy: (pack: string) => void;
+  onUnlock: () => void;
+  busy: boolean;
+  error?: string | null;
+}) {
+  const canUnlockNow = signedIn && credits > 0;
+
   return (
-    <motion.section key="paywall" {...fade} className="mx-auto w-full max-w-2xl px-4 pb-56 pt-10">
+    <motion.section key="paywall" {...fade} className="mx-auto w-full max-w-2xl px-4 pb-24 pt-10">
       <motion.h2
         className="glitch font-mono text-2xl font-bold uppercase leading-tight text-alert text-glow sm:text-3xl"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
-        Analysis complete. Threats detected.
+        Analysis complete. {THREAT_COPY[teaser.threat_level] ?? "Threats detected."}
       </motion.h2>
+      <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{teaser.headline}</p>
 
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Panel className="p-4">
-          <div className="font-mono text-5xl font-bold text-alert text-glow">3</div>
+          <div className="font-mono text-5xl font-bold text-alert text-glow">
+            {teaser.pattern_names.length}
+          </div>
           <div className="mt-1 font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
             Manipulation patterns found
           </div>
         </Panel>
         <Panel className="p-4">
-          <div className="font-mono text-5xl font-bold text-amber text-glow">1</div>
+          <div className="font-mono text-5xl font-bold text-amber text-glow">
+            {teaser.reply_labels.length}
+          </div>
           <div className="mt-1 font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-            Sender weak point identified
+            Counter-strike replies ready
           </div>
         </Panel>
       </div>
 
+      {teaser.pattern_names.length > 0 && (
+        <Panel className="mt-4 p-4">
+          <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            <AlertTriangle className="h-3 w-3 text-alert" /> detected_tactics
+          </div>
+          <ul className="space-y-2">
+            {teaser.pattern_names.map((name) => (
+              <li key={name} className="flex items-start gap-2 font-mono text-sm text-foreground">
+                <span className="mt-0.5 text-alert">▮</span> {name}
+              </li>
+            ))}
+          </ul>
+        </Panel>
+      )}
+
       <Panel className="relative mt-4 overflow-hidden p-4">
         <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-          <Fingerprint className="h-3 w-3 text-alert" /> psychological_profile.enc
+          <Fingerprint className="h-3 w-3 text-alert" /> profile_and_replies.enc
         </div>
-        <div className="space-y-2.5 blur-[5px] select-none" aria-hidden>
+        <div className="select-none space-y-2.5 blur-[5px]" aria-hidden>
           {BLUR_LINES.map((w, i) => (
             <div key={i} className={`h-3 rounded-sm bg-neon/25 ${w}`} />
           ))}
           <div className="mt-4 h-3 w-1/3 rounded-sm bg-alert/40" />
-          {BLUR_LINES.slice(0, 4).map((w, i) => (
+          {BLUR_LINES.slice(0, 5).map((w, i) => (
             <div key={`b${i}`} className={`h-3 rounded-sm bg-neon/20 ${w}`} />
           ))}
         </div>
@@ -275,63 +395,101 @@ export function PaywallState({ onUnlock }: { onUnlock: () => void }) {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-background/30 to-background" />
       </Panel>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-neon/25 bg-background/95 backdrop-blur-md">
-        <div className="mx-auto max-w-2xl px-4 py-4">
-          <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
-            <span className="text-alert">TRANSMISSION ENCRYPTED.</span> Unlock the full FBI-level
-            psychological profile and generate a Counter-Strike Response Script.
-          </p>
+      <Panel className="mt-5 p-4">
+        <p className="font-mono text-[11px] leading-relaxed text-muted-foreground">
+          <span className="text-alert">TRANSMISSION ENCRYPTED.</span> Unlock the sender’s true
+          motive, their weak point, and {teaser.reply_labels.length} ready-to-send replies written
+          for this exact message.
+        </p>
+
+        {canUnlockNow ? (
           <button
             onClick={onUnlock}
-            className="pulse-neon mt-3 flex w-full items-center justify-center gap-2 rounded-sm border border-neon bg-neon/15 px-4 py-4 font-mono text-sm font-bold uppercase tracking-[0.15em] text-neon transition-colors hover:bg-neon/25 active:scale-[0.99]"
+            disabled={busy}
+            className="pulse-neon mt-4 flex w-full items-center justify-center gap-2 rounded-sm border border-neon bg-neon/15 px-4 py-4 font-mono text-sm font-bold uppercase tracking-[0.15em] text-neon transition-colors hover:bg-neon/25 disabled:opacity-50"
           >
-            <Lock className="h-4 w-4" /> Decrypt full report — $9.99
+            <Lock className="h-4 w-4" />
+            {busy ? "Decrypting..." : `Decrypt report — 1 of ${credits} decodes`}
           </button>
-          <div className="mt-3 grid grid-cols-3 gap-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <ShieldCheck className="h-3 w-3 text-neon/70" /> secure pay
-            </span>
-            <span className="flex items-center gap-1">
-              <UserX className="h-3 w-3 text-neon/70" /> anonymous
-            </span>
-            <span className="flex items-center gap-1">
-              <Check className="h-3 w-3 text-neon/70" /> instant access
-            </span>
+        ) : !signedIn ? (
+          <button
+            onClick={onSignIn}
+            className="pulse-neon mt-4 flex w-full items-center justify-center gap-2 rounded-sm border border-neon bg-neon/15 px-4 py-4 font-mono text-sm font-bold uppercase tracking-[0.15em] text-neon transition-colors hover:bg-neon/25"
+          >
+            <Lock className="h-4 w-4" /> Unlock report
+          </button>
+        ) : (
+          <div className="mt-4 space-y-2">
+            {CREDIT_PACKS.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => onBuy(p.id)}
+                disabled={busy}
+                className="flex w-full items-center justify-between rounded-sm border border-neon/40 bg-neon/5 px-4 py-3.5 text-left transition-colors hover:bg-neon/15 disabled:opacity-50"
+              >
+                <span className="font-mono text-sm font-bold uppercase tracking-widest text-neon">
+                  {p.label}
+                </span>
+                <span className="flex items-center gap-2">
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                    {p.note}
+                  </span>
+                  <span className="font-mono text-sm text-foreground">
+                    ${(p.amountCents / 100).toFixed(2)}
+                  </span>
+                </span>
+              </button>
+            ))}
+            <p className="pt-1 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              one-time payment · no subscription · decodes never expire
+            </p>
           </div>
+        )}
+
+        {error && <p className="mt-3 font-mono text-[11px] text-alert">{error}</p>}
+
+        <div className="mt-4 grid grid-cols-3 gap-1 font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <ShieldCheck className="h-3 w-3 text-neon/70" /> secure pay
+          </span>
+          <span className="flex items-center gap-1">
+            <UserX className="h-3 w-3 text-neon/70" /> anonymous
+          </span>
+          <span className="flex items-center gap-1">
+            <Check className="h-3 w-3 text-neon/70" /> instant access
+          </span>
         </div>
-      </div>
+      </Panel>
     </motion.section>
   );
 }
 
 /* ---------------- STATE 4 ---------------- */
 
-const THREATS = [
-  {
-    title: "Guilt Induction",
-    body: "Sender reframes their own delay as your failure to follow up, transferring accountability.",
-  },
-  {
-    title: "Artificial Urgency (Bluff)",
-    body: "Deadline language is unsupported by any concrete constraint — pressure without leverage.",
-  },
-  {
-    title: "Reality Distortion / Gaslighting",
-    body: "Contradicts a previously agreed detail while implying you misremembered it.",
-  },
-];
-
-const SCRIPT = `Thanks for the update. To keep us aligned, I'm summarizing what we agreed on:
-
-1. The scope and timeline we confirmed on [date] remain unchanged.
-2. The item you raised was not part of that agreement — happy to treat it as a new request.
-3. I can proceed as soon as I get written confirmation on which option you prefer.
-
-Let me know which you'd like and I'll move immediately.`;
-
-export function UnlockedState({ onReset }: { onReset: () => void }) {
+function CopyBlock({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={() => {
+        navigator.clipboard?.writeText(text);
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 2000);
+      }}
+      className="mt-3 flex w-full items-center justify-center gap-2 rounded-sm border border-neon bg-neon/10 px-4 py-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-neon transition-colors hover:bg-neon/20"
+    >
+      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+      {copied ? "Copied" : "Copy reply"}
+    </button>
+  );
+}
 
+export function UnlockedState({
+  teaser,
+  onReset,
+}: {
+  teaser: ScanTeaser;
+  onReset: () => void;
+}) {
   return (
     <motion.section key="unlocked" {...fade} className="mx-auto w-full max-w-2xl px-4 pb-20 pt-10">
       <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.25em] text-neon">
@@ -340,55 +498,66 @@ export function UnlockedState({ onReset }: { onReset: () => void }) {
       <h2 className="mt-3 font-mono text-2xl font-bold uppercase text-foreground sm:text-3xl">
         Full Behavioral Report
       </h2>
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{teaser.headline}</p>
 
-      <h3 className="mt-8 flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-alert">
-        <AlertTriangle className="h-4 w-4" /> Threat Analysis
-      </h3>
-      <div className="mt-3 space-y-3">
-        {THREATS.map((t) => (
-          <Panel key={t.title} className="p-4">
-            <div className="flex gap-3">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-alert" />
-              <div className="min-w-0">
-                <div className="font-mono text-sm font-bold text-foreground">{t.title}</div>
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{t.body}</p>
-              </div>
-            </div>
-          </Panel>
-        ))}
-      </div>
+      {teaser.patterns && teaser.patterns.length > 0 && (
+        <>
+          <h3 className="mt-8 flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-alert">
+            <AlertTriangle className="h-4 w-4" /> Threat Analysis
+          </h3>
+          <div className="mt-3 space-y-3">
+            {teaser.patterns.map((t) => (
+              <Panel key={t.name} className="p-4">
+                <div className="flex gap-3">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-alert" />
+                  <div className="min-w-0">
+                    <div className="font-mono text-sm font-bold text-foreground">{t.name}</div>
+                    {t.quote && (
+                      <p className="mt-1.5 border-l-2 border-alert/50 pl-2 font-mono text-[12px] italic text-alert/80">
+                        “{t.quote}”
+                      </p>
+                    )}
+                    <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                      {t.explanation}
+                    </p>
+                  </div>
+                </div>
+              </Panel>
+            ))}
+          </div>
+        </>
+      )}
 
       <h3 className="mt-8 flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-amber">
-        <Eye className="h-4 w-4" /> Sender's True Motive
+        <Eye className="h-4 w-4" /> Sender&apos;s True Motive
       </h3>
       <Panel className="mt-3 p-4">
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          The sender is attempting to renegotiate terms without formally reopening them. The
-          emotional framing exists to make a concession feel like a favor. Their weak point: they
-          need your cooperation faster than you need theirs — every ambiguity you remove reduces
-          their leverage.
+        <p className="text-sm leading-relaxed text-muted-foreground">{teaser.motive}</p>
+        <p className="mt-4 border-t border-neon/15 pt-3 font-mono text-[10px] uppercase tracking-widest text-amber">
+          weak point
         </p>
+        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{teaser.weak_point}</p>
       </Panel>
 
       <h3 className="mt-8 flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-neon">
-        <Swords className="h-4 w-4" /> Counter-Strike Script
+        <Swords className="h-4 w-4" /> Counter-Strike Replies
       </h3>
-      <Panel className="mt-3 p-4">
-        <pre className="whitespace-pre-wrap font-mono text-[12px] leading-6 text-neon/90">
-          {SCRIPT}
-        </pre>
-        <button
-          onClick={() => {
-            navigator.clipboard?.writeText(SCRIPT);
-            setCopied(true);
-            window.setTimeout(() => setCopied(false), 2000);
-          }}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-sm border border-neon bg-neon/10 px-4 py-3 font-mono text-xs font-bold uppercase tracking-[0.15em] text-neon transition-colors hover:bg-neon/20"
-        >
-          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-          {copied ? "Copied to clipboard" : "Copy to clipboard"}
-        </button>
-      </Panel>
+      <div className="mt-3 space-y-3">
+        {(teaser.replies ?? []).map((r) => (
+          <Panel key={r.label} className="p-4">
+            <div className="font-mono text-[11px] uppercase tracking-widest text-neon">
+              {r.label}
+            </div>
+            <div className="mt-1 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              {r.when_to_use}
+            </div>
+            <pre className="mt-3 whitespace-pre-wrap font-mono text-[12px] leading-6 text-neon/90">
+              {r.text}
+            </pre>
+            <CopyBlock text={r.text} />
+          </Panel>
+        ))}
+      </div>
 
       <button
         onClick={onReset}
@@ -399,5 +568,3 @@ export function UnlockedState({ onReset }: { onReset: () => void }) {
     </motion.section>
   );
 }
-
-export { AnimatePresence };
