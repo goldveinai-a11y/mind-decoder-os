@@ -1,14 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence } from "motion/react";
-import { Radar as RadarIcon, TerminalSquare } from "lucide-react";
+import { LogOut, Radar as RadarIcon, X, Zap } from "lucide-react";
 import { Backdrop } from "@/components/cyber/Frame";
-import {
-  InputState,
-  ScanningState,
-  PaywallState,
-  UnlockedState,
-} from "@/components/cyber/states";
+import { InputState, ScanningState, PaywallState, UnlockedState } from "@/components/cyber/states";
+import { PackCheckout } from "@/components/cyber/Checkout";
+import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { getAccount, getScan, runScan, unlockScan } from "@/lib/scan.functions";
+import type { ScanContext, ScanTeaser } from "@/lib/scan-types";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -17,12 +18,12 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Intercept and decode any message. Detect gaslighting, bluffs and hidden agendas with an FBI-level behavioral profile.",
+          "Paste a message or screenshot. Detect gaslighting, bluffs and hidden agendas, then copy the reply that ends the exchange.",
       },
       { property: "og:title", content: "Cyber-Polygraph — Decode Hidden Motives" },
       {
         property: "og:description",
-        content: "Paste a message. Our AI radar detects manipulation patterns in 8 seconds.",
+        content: "AI radar for manipulation in work, client and personal messages.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -32,13 +33,131 @@ export const Route = createFileRoute("/")({
 });
 
 type Stage = "input" | "scanning" | "paywall" | "unlocked";
+const STORE_KEY = "cp_scan";
 
 function Index() {
+  const navigate = useNavigate();
+  const { session, loading: authLoading } = useAuth();
   const [stage, setStage] = useState<Stage>("input");
+  const [teaser, setTeaser] = useState<ScanTeaser | null>(null);
+  const [scanDone, setScanDone] = useState(false);
+  const [credits, setCredits] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [checkoutPack, setCheckoutPack] = useState<string | null>(null);
+  const restored = useRef(false);
+
+  const refreshCredits = useCallback(async () => {
+    if (!session) {
+      setCredits(0);
+      return 0;
+    }
+    try {
+      const acc = await getAccount();
+      setCredits(acc.credits);
+      return acc.credits;
+    } catch {
+      return 0;
+    }
+  }, [session]);
+
+  useEffect(() => {
+    void refreshCredits();
+  }, [refreshCredits]);
+
+  // Restore a scan after sign-in or checkout return.
+  useEffect(() => {
+    if (restored.current) return;
+    restored.current = true;
+    const raw = sessionStorage.getItem(STORE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw) as { id: string; token: string };
+    void (async () => {
+      const t = await getScan({ data: saved });
+      if (!t) return;
+      setTeaser(t);
+      setStage(t.unlocked ? "unlocked" : "paywall");
+    })();
+  }, []);
+
+  // After a successful payment Stripe returns here.
+  useEffect(() => {
+    if (authLoading || !session) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("paid") !== "1") return;
+    window.history.replaceState({}, "", url.pathname);
+    setBusy(true);
+    void (async () => {
+      for (let i = 0; i < 12; i += 1) {
+        const c = await refreshCredits();
+        if (c > 0) break;
+        await new Promise((r) => setTimeout(r, 1500));
+      }
+      setBusy(false);
+    })();
+  }, [authLoading, session, refreshCredits]);
+
+  const startScan = async (payload: {
+    text: string;
+    context: ScanContext;
+    imageDataUrl: string | null;
+  }) => {
+    setError(null);
+    setScanDone(false);
+    setStage("scanning");
+    const started = Date.now();
+    try {
+      const t = await runScan({
+        data: {
+          context: payload.context,
+          text: payload.text,
+          imageDataUrl: payload.imageDataUrl ?? undefined,
+        },
+      });
+      setScanDone(true);
+      sessionStorage.setItem(STORE_KEY, JSON.stringify({ id: t.id, token: t.token }));
+      const wait = Math.max(0, 8000 - (Date.now() - started));
+      window.setTimeout(() => {
+        setTeaser(t);
+        setStage("paywall");
+      }, wait + 600);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "The scan failed. Try again.");
+      setStage("input");
+    }
+  };
+
+  const doUnlock = async () => {
+    if (!teaser) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const full = await unlockScan({ data: { id: teaser.id, token: teaser.token } });
+      setTeaser(full);
+      setStage("unlocked");
+      void refreshCredits();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Could not unlock the report.";
+      setError(msg.includes("NO_DECODES") ? "You have no decodes left." : msg);
+      void refreshCredits();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const reset = () => {
+    sessionStorage.removeItem(STORE_KEY);
+    setTeaser(null);
+    setScanDone(false);
+    setStage("input");
+  };
+
+  const returnUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/?paid=1`;
 
   return (
     <div className="min-h-screen">
       <Backdrop />
+      <PaymentTestModeBanner />
 
       <header className="sticky top-0 z-30 border-b border-neon/20 bg-background/85 backdrop-blur-md">
         <div className="mx-auto grid max-w-2xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3">
@@ -48,27 +167,65 @@ function Index() {
               COMM_INTERCEPTOR v2.4
             </span>
           </div>
-          <button
-            onClick={() => setStage("unlocked")}
-            title="dev: skip to unlocked"
-            aria-label="Developer skip to unlocked state"
-            className="shrink-0 rounded-sm border border-border/60 p-1.5 text-muted-foreground/40 transition-colors hover:text-neon"
-          >
-            <TerminalSquare className="h-3.5 w-3.5" />
-          </button>
+          <div className="flex shrink-0 items-center gap-3">
+            {session ? (
+              <>
+                <span className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest text-amber">
+                  <Zap className="h-3 w-3" /> {credits}
+                </span>
+                <button
+                  onClick={() => supabase.auth.signOut()}
+                  aria-label="Sign out"
+                  className="rounded-sm border border-border/60 p-1.5 text-muted-foreground/60 transition-colors hover:text-neon"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => navigate({ to: "/auth" })}
+                className="rounded-sm border border-neon/40 px-2.5 py-1 font-mono text-[10px] uppercase tracking-widest text-neon transition-colors hover:bg-neon/10"
+              >
+                sign in
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
       <main>
         <AnimatePresence mode="wait">
-          {stage === "input" && <InputState onScan={() => setStage("scanning")} />}
-          {stage === "scanning" && <ScanningState onDone={() => setStage("paywall")} />}
-          {stage === "paywall" && (
-            <PaywallState onUnlock={() => alert("Redirecting to Stripe...")} />
+          {stage === "input" && <InputState onScan={startScan} error={error} />}
+          {stage === "scanning" && <ScanningState done={scanDone} />}
+          {stage === "paywall" && teaser && (
+            <PaywallState
+              teaser={teaser}
+              credits={credits}
+              signedIn={Boolean(session)}
+              busy={busy}
+              error={error}
+              onSignIn={() => navigate({ to: "/auth" })}
+              onBuy={(pack) => setCheckoutPack(pack)}
+              onUnlock={doUnlock}
+            />
           )}
-          {stage === "unlocked" && <UnlockedState onReset={() => setStage("input")} />}
+          {stage === "unlocked" && teaser && <UnlockedState teaser={teaser} onReset={reset} />}
         </AnimatePresence>
       </main>
+
+      {checkoutPack && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-background/95 p-4 backdrop-blur-sm">
+          <div className="mx-auto max-w-2xl">
+            <button
+              onClick={() => setCheckoutPack(null)}
+              className="mb-3 ml-auto flex items-center gap-1 rounded-sm border border-border px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground hover:text-neon"
+            >
+              <X className="h-3 w-3" /> close
+            </button>
+            <PackCheckout pack={checkoutPack} returnUrl={returnUrl} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
