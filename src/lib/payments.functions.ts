@@ -39,7 +39,7 @@ export const createPackCheckout = createServerFn({ method: "POST" })
         ui_mode: "embedded_page",
         return_url: data.returnUrl,
         customer: customerId,
-        payment_intent_data: { description: product.name },
+        payment_intent_data: { description: `Unbluff — ${product.name}` },
         managed_payments: { enabled: true },
         metadata: {
           userId: context.userId,
