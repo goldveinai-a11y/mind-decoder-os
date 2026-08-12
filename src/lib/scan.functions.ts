@@ -1,0 +1,113 @@
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { analyzeTransmission } from "./analyze.server";
+import {
+  MAX_TEXT_LENGTH,
+  buildTeaser,
+  newAccessToken,
+  normalizeContext,
+  validateImageDataUrl,
+} from "./scan.server";
+import type { ScanResult, ScanTeaser } from "./scan-types";
+
+export const runScan = createServerFn({ method: "POST" })
+  .inputValidator((input: { context: string; text?: string; imageDataUrl?: string }) => {
+    const text = (input.text ?? "").trim().slice(0, MAX_TEXT_LENGTH);
+    const imageDataUrl = input.imageDataUrl ? validateImageDataUrl(input.imageDataUrl) : null;
+    if (!text && !imageDataUrl) throw new Error("Paste a message or attach a screenshot.");
+    return { context: normalizeContext(input.context), text, imageDataUrl };
+  })
+  .handler(async ({ data }): Promise<ScanTeaser> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const token = newAccessToken();
+
+    const { data: row, error } = await supabaseAdmin
+      .from("scans")
+      .insert({
+        access_token: token,
+        context: data.context,
+        input_text: data.text || null,
+        status: "processing",
+      })
+      .select("id")
+      .single();
+    if (error || !row) throw new Error("Could not start the scan.");
+
+    try {
+      const result = await analyzeTransmission({
+        context: data.context,
+        text: data.text,
+        imageDataUrl: data.imageDataUrl,
+      });
+      await supabaseAdmin
+        .from("scans")
+        .update({ result: result as unknown as Record<string, unknown>, status: "done" })
+        .eq("id", row.id);
+      return buildTeaser(row.id, token, result, false);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "unknown";
+      await supabaseAdmin
+        .from("scans")
+        .update({ status: "failed", error: message })
+        .eq("id", row.id);
+      if (message === "RATE_LIMIT") throw new Error("Too many scans right now. Try again shortly.");
+      if (message === "NO_CREDITS") throw new Error("AI quota exhausted. Try again later.");
+      throw new Error("The scan failed. Try again.");
+    }
+  });
+
+export const getScan = createServerFn({ method: "POST" })
+  .inputValidator((input: { id: string; token: string }) => input)
+  .handler(async ({ data }): Promise<ScanTeaser | null> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
+      .from("scans")
+      .select("id, access_token, result, unlocked")
+      .eq("id", data.id)
+      .eq("access_token", data.token)
+      .maybeSingle();
+    if (!row?.result) return null;
+    return buildTeaser(row.id, row.access_token, row.result as unknown as ScanResult, row.unlocked);
+  });
+
+export const getAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ credits: number; email: string | null }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("credits, email")
+      .eq("id", context.userId)
+      .maybeSingle();
+    return { credits: profile?.credits ?? 0, email: profile?.email ?? null };
+  });
+
+export const unlockScan = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string; token: string }) => input)
+  .handler(async ({ data, context }): Promise<ScanTeaser> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
+      .from("scans")
+      .select("id, access_token, result, unlocked, user_id")
+      .eq("id", data.id)
+      .eq("access_token", data.token)
+      .maybeSingle();
+    if (!row?.result) throw new Error("Report not found.");
+
+    const result = row.result as unknown as ScanResult;
+
+    if (row.unlocked) {
+      return buildTeaser(row.id, row.access_token, result, true);
+    }
+
+    const { data: spent } = await supabaseAdmin
+      .from("profiles")
+      .update({ credits: -1 } as never)
+      .eq("id", context.userId)
+      .select("credits")
+      .maybeSingle();
+    void spent;
+
+    throw new Error("NOT_IMPLEMENTED");
+  });
