@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as HistoryRouteImport } from './routes/history'
-import { Route as ApiPublicAdminTestSessionRouteImport } from './routes/api/public/admin/test-session'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -30,12 +29,6 @@ const HistoryRoute = HistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicAdminTestSessionRoute =
-  ApiPublicAdminTestSessionRouteImport.update({
-    id: '/api/public/admin/test-session',
-    path: '/api/public/admin/test-session',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -47,14 +40,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/history': typeof HistoryRoute
-  '/api/public/admin/test-session': typeof ApiPublicAdminTestSessionRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/history': typeof HistoryRoute
-  '/api/public/admin/test-session': typeof ApiPublicAdminTestSessionRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -62,38 +53,20 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/history': typeof HistoryRoute
-  '/api/public/admin/test-session': typeof ApiPublicAdminTestSessionRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/auth'
-    | '/history'
-    | '/api/public/admin/test-session'
-    | '/api/public/payments/webhook'
+  fullPaths: '/' | '/auth' | '/history' | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/auth'
-    | '/history'
-    | '/api/public/admin/test-session'
-    | '/api/public/payments/webhook'
-  id:
-    | '__root__'
-    | '/'
-    | '/auth'
-    | '/history'
-    | '/api/public/admin/test-session'
-    | '/api/public/payments/webhook'
+  to: '/' | '/auth' | '/history' | '/api/public/payments/webhook'
+  id: '__root__' | '/' | '/auth' | '/history' | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   HistoryRoute: typeof HistoryRoute
-  ApiPublicAdminTestSessionRoute: typeof ApiPublicAdminTestSessionRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -120,13 +93,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/admin/test-session': {
-      id: '/api/public/admin/test-session'
-      path: '/api/public/admin/test-session'
-      fullPath: '/api/public/admin/test-session'
-      preLoaderRoute: typeof ApiPublicAdminTestSessionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -141,7 +107,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   HistoryRoute: HistoryRoute,
-  ApiPublicAdminTestSessionRoute: ApiPublicAdminTestSessionRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport
