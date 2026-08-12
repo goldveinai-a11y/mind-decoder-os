@@ -9,13 +9,13 @@ import { useAuth } from "@/hooks/useAuth";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Operator Access — Cyber-Polygraph" },
+      { title: "Operator Access — Unbluff" },
       {
         name: "description",
         content:
           "Sign in to unlock full behavioral reports and counter-strike reply scripts for any message.",
       },
-      { property: "og:title", content: "Operator Access — Cyber-Polygraph" },
+      { property: "og:title", content: "Operator Access — Unbluff" },
       {
         property: "og:description",
         content: "Sign in to unlock full behavioral reports and reply scripts.",

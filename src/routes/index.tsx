@@ -14,13 +14,13 @@ import type { ScanContext, ScanTeaser } from "@/lib/scan-types";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Cyber-Polygraph — Decode Hidden Motives in Any Message" },
+      { title: "Unbluff — Decode Hidden Motives in Any Message" },
       {
         name: "description",
         content:
           "Paste a message or screenshot. Detect gaslighting, bluffs and hidden agendas, then copy the reply that ends the exchange.",
       },
-      { property: "og:title", content: "Cyber-Polygraph — Decode Hidden Motives" },
+      { property: "og:title", content: "Unbluff — Decode Hidden Motives" },
       {
         property: "og:description",
         content: "AI radar for manipulation in work, client and personal messages.",
@@ -175,7 +175,7 @@ function Index() {
           <div className="flex min-w-0 items-center gap-2">
             <RadarIcon className="h-4 w-4 shrink-0 text-neon" />
             <span className="truncate font-mono text-xs font-bold uppercase tracking-[0.18em] text-neon">
-              COMM_INTERCEPTOR v2.4
+              UNBLUFF // COMM_INTERCEPTOR v2.4
             </span>
           </div>
           <div className="flex shrink-0 items-center gap-3">
