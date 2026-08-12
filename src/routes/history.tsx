@@ -10,12 +10,12 @@ import type { ScanTeaser } from "@/lib/scan-types";
 export const Route = createFileRoute("/history")({
   head: () => ({
     meta: [
-      { title: "My Decodes — Cyber-Polygraph" },
+      { title: "My Decodes — Unbluff" },
       {
         name: "description",
         content: "Every message you decoded, with its manipulation patterns and reply scripts.",
       },
-      { property: "og:title", content: "My Decodes — Cyber-Polygraph" },
+      { property: "og:title", content: "My Decodes — Unbluff" },
       { property: "og:description", content: "Your archive of decoded transmissions." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

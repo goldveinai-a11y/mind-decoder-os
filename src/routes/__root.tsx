@@ -77,13 +77,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Cyber-Polygraph — Decode Hidden Motives" },
+      { title: "Unbluff — Decode Hidden Motives" },
       {
         name: "description",
         content:
           "Paste any message and let the AI radar detect gaslighting, bluffs and hidden agendas.",
       },
-      { property: "og:title", content: "Cyber-Polygraph — Decode Hidden Motives" },
+      { property: "og:title", content: "Unbluff — Decode Hidden Motives" },
       {
         property: "og:description",
         content: "AI message interception: detect manipulation patterns in seconds.",

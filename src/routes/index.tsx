@@ -14,13 +14,13 @@ import type { ScanContext, ScanTeaser } from "@/lib/scan-types";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Cyber-Polygraph — Decode Hidden Motives in Any Message" },
+      { title: "Unbluff — Decode Hidden Motives in Any Message" },
       {
         name: "description",
         content:
           "Paste a message or screenshot. Detect gaslighting, bluffs and hidden agendas, then copy the reply that ends the exchange.",
       },
-      { property: "og:title", content: "Cyber-Polygraph — Decode Hidden Motives" },
+      { property: "og:title", content: "Unbluff — Decode Hidden Motives" },
       {
         property: "og:description",
         content: "AI radar for manipulation in work, client and personal messages.",
