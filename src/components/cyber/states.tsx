@@ -35,9 +35,11 @@ const fade = {
 export function InputState({
   onScan,
   error,
+  onBuy,
 }: {
   onScan: (payload: { text: string; context: ScanContext; imageDataUrl: string | null }) => void;
   error?: string | null;
+  onBuy: (pack: string) => void;
 }) {
   const [value, setValue] = useState("");
   const [focused, setFocused] = useState(false);
@@ -174,7 +176,7 @@ export function InputState({
 
       <ChatGptObjection />
       <Showcase />
-      <PricingStrip />
+      <PricingStrip onBuy={onBuy} />
       <PrivacyBlock />
       <OtherArenas />
     </motion.section>
