@@ -35,6 +35,7 @@ export const Route = createFileRoute("/")({
 
 type Stage = "input" | "scanning" | "paywall" | "unlocked";
 const STORE_KEY = "cp_scan";
+const PACK_KEY = "cp_pending_pack";
 const FP_KEY = "cp_device";
 const FREE_KEY = "cp_free_used";
 
@@ -82,6 +83,24 @@ function Index() {
   useEffect(() => {
     setFreeAvailable(localStorage.getItem(FREE_KEY) !== "1");
   }, []);
+
+  // Resume a pack purchase started before sign-in.
+  useEffect(() => {
+    if (authLoading || !session) return;
+    const pending = sessionStorage.getItem(PACK_KEY);
+    if (!pending) return;
+    sessionStorage.removeItem(PACK_KEY);
+    setCheckoutPack(pending);
+  }, [authLoading, session]);
+
+  const startPurchase = (pack: string) => {
+    if (session) {
+      setCheckoutPack(pack);
+      return;
+    }
+    sessionStorage.setItem(PACK_KEY, pack);
+    void navigate({ to: "/auth" });
+  };
 
   // Restore a scan after sign-in or checkout return.
   useEffect(() => {
@@ -256,7 +275,9 @@ function Index() {
 
       <main>
         <AnimatePresence mode="wait">
-          {stage === "input" && <InputState onScan={startScan} error={error} />}
+          {stage === "input" && (
+            <InputState onScan={startScan} error={error} onBuy={startPurchase} />
+          )}
           {stage === "scanning" && <ScanningState done={scanDone} />}
           {stage === "paywall" && teaser && (
             <PaywallState
