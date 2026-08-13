@@ -51,6 +51,7 @@ class ChiptuneEngine {
       if (!this.enabled) return;
       this.init();
       void this.ctx?.resume();
+      this.playLoop();
     };
     window.addEventListener("pointerdown", unlock, { passive: true });
     window.addEventListener("keydown", unlock);
@@ -81,6 +82,7 @@ class ChiptuneEngine {
       this.init();
       // Resume context if suspended (browser autoplay policy).
       void this.ctx?.resume();
+      this.playLoop();
     } else {
       this.stopLoop();
     }
