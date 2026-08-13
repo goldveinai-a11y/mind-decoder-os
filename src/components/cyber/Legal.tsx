@@ -8,6 +8,9 @@ export function SiteFooter() {
   return (
     <footer className="mt-16 border-t border-border/60 px-4 py-6">
       <div className="mx-auto flex max-w-3xl flex-wrap items-center justify-center gap-x-4 gap-y-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground/60">
+        <Link to="/tactics" className="transition-colors hover:text-neon">
+          Tactic library
+        </Link>
         <Link to="/terms" className="transition-colors hover:text-neon">
           Terms
         </Link>
