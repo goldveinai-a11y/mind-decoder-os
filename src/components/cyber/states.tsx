@@ -667,7 +667,19 @@ export function UnlockedState({
                 <div className="flex gap-3">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-alert" />
                   <div className="min-w-0">
-                    <div className="font-mono text-sm font-bold text-foreground">{t.name}</div>
+                    <div className="font-mono text-sm font-bold text-foreground">
+                      {t.slug && getTactic(t.slug) ? (
+                        <Link
+                          to="/tactics/$slug"
+                          params={{ slug: t.slug }}
+                          className="underline decoration-dotted underline-offset-4 hover:text-neon"
+                        >
+                          {t.name}
+                        </Link>
+                      ) : (
+                        t.name
+                      )}
+                    </div>
                     {t.quote && (
                       <p className="mt-1.5 border-l-2 border-alert/50 pl-2 font-mono text-[12px] italic text-alert/80">
                         “{t.quote}”
