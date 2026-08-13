@@ -212,12 +212,10 @@ export function ScanFlow({ initialContext, heroTitle, heroSubtitle, heroBody }: 
       sessionStorage.setItem(STORE_KEY, JSON.stringify({ id: t.id, token: t.token }));
       const wait = Math.max(0, 8000 - (Date.now() - started));
       window.setTimeout(() => {
-        chiptune.stopLoop();
         setTeaser(t);
         setStage("paywall");
       }, wait + 600);
     } catch (e) {
-      chiptune.stopLoop();
       setError(e instanceof Error ? e.message : "The scan failed. Try again.");
       setStage("input");
     }
