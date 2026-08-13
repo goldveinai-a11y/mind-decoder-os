@@ -91,8 +91,7 @@ export function InputState({
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-widest text-neon/70">
-        <span>first decode free · no account</span>
-        <span className="text-muted-foreground">then $4.99 · no subscription</span>
+        <span>first decode free · no account · no subscription</span>
       </div>
 
       <div className="mt-7 flex flex-wrap gap-2">
