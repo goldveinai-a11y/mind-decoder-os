@@ -9,7 +9,7 @@ import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { SiteFooter } from "@/components/cyber/Legal";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { getAccount, getScan, runScan, unlockScan } from "@/lib/scan.functions";
+import { freeUnlockScan, getAccount, getScan, runScan, unlockScan } from "@/lib/scan.functions";
 import type { ScanContext, ScanTeaser } from "@/lib/scan-types";
 
 export const Route = createFileRoute("/")({
@@ -35,6 +35,17 @@ export const Route = createFileRoute("/")({
 
 type Stage = "input" | "scanning" | "paywall" | "unlocked";
 const STORE_KEY = "cp_scan";
+const FP_KEY = "cp_device";
+const FREE_KEY = "cp_free_used";
+
+function deviceFingerprint(): string {
+  let id = localStorage.getItem(FP_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(FP_KEY, id);
+  }
+  return id;
+}
 
 function Index() {
   const navigate = useNavigate();
@@ -47,6 +58,7 @@ function Index() {
   const [error, setError] = useState<string | null>(null);
   const [checkoutPack, setCheckoutPack] = useState<string | null>(null);
   const [autoUnlock, setAutoUnlock] = useState(false);
+  const [freeAvailable, setFreeAvailable] = useState(false);
   const restored = useRef(false);
 
   const refreshCredits = useCallback(async () => {
@@ -66,6 +78,10 @@ function Index() {
   useEffect(() => {
     void refreshCredits();
   }, [refreshCredits]);
+
+  useEffect(() => {
+    setFreeAvailable(localStorage.getItem(FREE_KEY) !== "1");
+  }, []);
 
   // Restore a scan after sign-in or checkout return.
   useEffect(() => {
@@ -143,6 +159,32 @@ function Index() {
       const msg = e instanceof Error ? e.message : "Could not unlock the report.";
       setError(msg.includes("NO_DECODES") ? "You have no decodes left." : msg);
       void refreshCredits();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const doFreeUnlock = async () => {
+    if (!teaser) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const full = await freeUnlockScan({
+        data: { id: teaser.id, token: teaser.token, fingerprint: deviceFingerprint() },
+      });
+      localStorage.setItem(FREE_KEY, "1");
+      setFreeAvailable(false);
+      setTeaser(full);
+      setStage("unlocked");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Could not unlock the report.";
+      if (msg.includes("FREE_USED")) {
+        localStorage.setItem(FREE_KEY, "1");
+        setFreeAvailable(false);
+        setError("Your free decode is already used. Grab a pack to keep going.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setBusy(false);
     }
@@ -226,6 +268,8 @@ function Index() {
               onSignIn={() => navigate({ to: "/auth" })}
               onBuy={(pack) => setCheckoutPack(pack)}
               onUnlock={doUnlock}
+              freeAvailable={freeAvailable}
+              onFreeUnlock={doFreeUnlock}
             />
           )}
           {stage === "unlocked" && teaser && <UnlockedState teaser={teaser} onReset={reset} />}
