@@ -7,9 +7,11 @@ import { InputState, ScanningState, PaywallState, UnlockedState } from "@/compon
 import { PackCheckout } from "@/components/cyber/Checkout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { SiteFooter } from "@/components/cyber/Legal";
+import { SoundToggle } from "@/components/cyber/SoundToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { freeUnlockScan, getAccount, getScan, runScan, unlockScan } from "@/lib/scan.functions";
+import { chiptune } from "@/lib/chiptune";
 import type { ScanContext, ScanTeaser } from "@/lib/scan-types";
 
 export const Route = createFileRoute("/")({
