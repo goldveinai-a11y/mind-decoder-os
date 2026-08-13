@@ -249,6 +249,7 @@ function Index() {
             </span>
           </div>
           <div className="flex shrink-0 items-center gap-3">
+            <SoundToggle />
             {session ? (
               <>
                 <span className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest text-amber">
