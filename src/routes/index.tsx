@@ -202,6 +202,7 @@ function Index() {
       setFreeAvailable(false);
       setTeaser(full);
       setStage("unlocked");
+      chiptune.blipSuccess();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Could not unlock the report.";
       if (msg.includes("FREE_USED")) {
