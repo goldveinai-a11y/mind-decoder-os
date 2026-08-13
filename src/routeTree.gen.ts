@@ -11,11 +11,15 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as GaslightingRouteImport } from './routes/gaslighting'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as LandlordRouteImport } from './routes/landlord'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RefundsRouteImport } from './routes/refunds'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as WorkRouteImport } from './routes/work'
 import { Route as TacticsIndexRouteImport } from './routes/tactics.index'
 import { Route as TacticsSlugRouteImport } from './routes/tactics.$slug'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
@@ -30,14 +34,29 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClientsRoute = ClientsRouteImport.update({
+  id: '/clients',
+  path: '/clients',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GaslightingRoute = GaslightingRouteImport.update({
+  id: '/gaslighting',
+  path: '/gaslighting',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HistoryRoute = HistoryRouteImport.update({
   id: '/history',
   path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LandlordRoute = LandlordRouteImport.update({
+  id: '/landlord',
+  path: '/landlord',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -53,6 +72,11 @@ const RefundsRoute = RefundsRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorkRoute = WorkRouteImport.update({
+  id: '/work',
+  path: '/work',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TacticsIndexRoute = TacticsIndexRouteImport.update({
@@ -75,11 +99,15 @@ const ApiPublicPaymentsWebhookRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/clients': typeof ClientsRoute
   '/contact': typeof ContactRoute
+  '/gaslighting': typeof GaslightingRoute
   '/history': typeof HistoryRoute
+  '/landlord': typeof LandlordRoute
   '/privacy': typeof PrivacyRoute
   '/refunds': typeof RefundsRoute
   '/terms': typeof TermsRoute
+  '/work': typeof WorkRoute
   '/tactics/$slug': typeof TacticsSlugRoute
   '/tactics/': typeof TacticsIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -87,11 +115,15 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/clients': typeof ClientsRoute
   '/contact': typeof ContactRoute
+  '/gaslighting': typeof GaslightingRoute
   '/history': typeof HistoryRoute
+  '/landlord': typeof LandlordRoute
   '/privacy': typeof PrivacyRoute
   '/refunds': typeof RefundsRoute
   '/terms': typeof TermsRoute
+  '/work': typeof WorkRoute
   '/tactics/$slug': typeof TacticsSlugRoute
   '/tactics': typeof TacticsIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -100,11 +132,15 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/clients': typeof ClientsRoute
   '/contact': typeof ContactRoute
+  '/gaslighting': typeof GaslightingRoute
   '/history': typeof HistoryRoute
+  '/landlord': typeof LandlordRoute
   '/privacy': typeof PrivacyRoute
   '/refunds': typeof RefundsRoute
   '/terms': typeof TermsRoute
+  '/work': typeof WorkRoute
   '/tactics/$slug': typeof TacticsSlugRoute
   '/tactics/': typeof TacticsIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
@@ -114,11 +150,15 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/clients'
     | '/contact'
+    | '/gaslighting'
     | '/history'
+    | '/landlord'
     | '/privacy'
     | '/refunds'
     | '/terms'
+    | '/work'
     | '/tactics/$slug'
     | '/tactics/'
     | '/api/public/payments/webhook'
@@ -126,11 +166,15 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/clients'
     | '/contact'
+    | '/gaslighting'
     | '/history'
+    | '/landlord'
     | '/privacy'
     | '/refunds'
     | '/terms'
+    | '/work'
     | '/tactics/$slug'
     | '/tactics'
     | '/api/public/payments/webhook'
@@ -138,11 +182,15 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/clients'
     | '/contact'
+    | '/gaslighting'
     | '/history'
+    | '/landlord'
     | '/privacy'
     | '/refunds'
     | '/terms'
+    | '/work'
     | '/tactics/$slug'
     | '/tactics/'
     | '/api/public/payments/webhook'
@@ -151,11 +199,15 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  ClientsRoute: typeof ClientsRoute
   ContactRoute: typeof ContactRoute
+  GaslightingRoute: typeof GaslightingRoute
   HistoryRoute: typeof HistoryRoute
+  LandlordRoute: typeof LandlordRoute
   PrivacyRoute: typeof PrivacyRoute
   RefundsRoute: typeof RefundsRoute
   TermsRoute: typeof TermsRoute
+  WorkRoute: typeof WorkRoute
   TacticsSlugRoute: typeof TacticsSlugRoute
   TacticsIndexRoute: typeof TacticsIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
@@ -177,6 +229,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/clients': {
+      id: '/clients'
+      path: '/clients'
+      fullPath: '/clients'
+      preLoaderRoute: typeof ClientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contact': {
       id: '/contact'
       path: '/contact'
@@ -184,11 +243,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gaslighting': {
+      id: '/gaslighting'
+      path: '/gaslighting'
+      fullPath: '/gaslighting'
+      preLoaderRoute: typeof GaslightingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/history': {
       id: '/history'
       path: '/history'
       fullPath: '/history'
       preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/landlord': {
+      id: '/landlord'
+      path: '/landlord'
+      fullPath: '/landlord'
+      preLoaderRoute: typeof LandlordRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -210,6 +283,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/work': {
+      id: '/work'
+      path: '/work'
+      fullPath: '/work'
+      preLoaderRoute: typeof WorkRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tactics/': {
@@ -239,11 +319,15 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  ClientsRoute: ClientsRoute,
   ContactRoute: ContactRoute,
+  GaslightingRoute: GaslightingRoute,
   HistoryRoute: HistoryRoute,
+  LandlordRoute: LandlordRoute,
   PrivacyRoute: PrivacyRoute,
   RefundsRoute: RefundsRoute,
   TermsRoute: TermsRoute,
+  WorkRoute: WorkRoute,
   TacticsSlugRoute: TacticsSlugRoute,
   TacticsIndexRoute: TacticsIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,

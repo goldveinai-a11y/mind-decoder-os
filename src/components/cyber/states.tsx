@@ -36,14 +36,26 @@ export function InputState({
   onScan,
   error,
   onBuy,
+  initialContext = "work",
+  heroTitle,
+  heroSubtitle,
+  heroBody,
+  showcaseSlugs = SHOWCASE_SLUGS,
+  chatGptObjection,
 }: {
   onScan: (payload: { text: string; context: ScanContext; imageDataUrl: string | null }) => void;
   error?: string | null;
   onBuy: (pack: string) => void;
+  initialContext?: ScanContext;
+  heroTitle?: React.ReactNode;
+  heroSubtitle?: React.ReactNode;
+  heroBody?: React.ReactNode;
+  showcaseSlugs?: string[];
+  chatGptObjection?: React.ReactNode;
 }) {
   const [value, setValue] = useState("");
   const [focused, setFocused] = useState(false);
-  const [context, setContext] = useState<ScanContext>("work");
+  const [context, setContext] = useState<ScanContext>(initialContext);
   const [image, setImage] = useState<{ name: string; dataUrl: string } | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -77,18 +89,26 @@ export function InputState({
         <Activity className="h-3.5 w-3.5" /> secure channel open
       </div>
       <h1 className="font-mono text-4xl font-bold leading-tight text-foreground sm:text-5xl">
-        They’re using a tactic.
-        <br />
-        It has <span className="text-neon text-glow">a name.</span>
+        {heroTitle ?? (
+          <>
+            They’re using a tactic.
+            <br />
+            It has <span className="text-neon text-glow">a name.</span>
+          </>
+        )}
       </h1>
-      <p className="mt-4 max-w-xl text-base leading-relaxed text-foreground sm:text-lg">
-        You don’t win the argument. You just stop losing.
-      </p>
-      <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-        Paste the message from your boss, your manager, HR or a client. Unbluff names the play
-        they’re running — false deadline, blame trail, moving goalposts — and writes the reply you
-        can send as-is.
-      </p>
+      {heroSubtitle ?? (
+        <p className="mt-4 max-w-xl text-base leading-relaxed text-foreground sm:text-lg">
+          You don’t win the argument. You just stop losing.
+        </p>
+      )}
+      {heroBody ?? (
+        <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+          Paste the message from your boss, your manager, HR or a client. Unbluff names the play
+          they’re running — false deadline, blame trail, moving goalposts — and writes the reply you
+          can send as-is.
+        </p>
+      )}
 
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-widest text-neon/70">
         <span>first decode free · no account · no subscription</span>
@@ -173,11 +193,11 @@ export function InputState({
         No shouting. No insults. Just the reply that ends it.
       </p>
 
-      <ChatGptObjection />
-      <Showcase />
+      {chatGptObjection ?? <ChatGptObjection />}
+      <Showcase slugs={showcaseSlugs} />
       <PricingStrip onBuy={onBuy} />
       <PrivacyBlock />
-      <OtherArenas />
+      <ArenaNav />
     </motion.section>
   );
 }
@@ -206,8 +226,8 @@ function ChatGptObjection() {
   );
 }
 
-function Showcase() {
-  const items = SHOWCASE_SLUGS.map((s) => getTactic(s)).filter(Boolean);
+function Showcase({ slugs = SHOWCASE_SLUGS }: { slugs?: string[] }) {
+  const items = slugs.map((s) => getTactic(s)).filter(Boolean);
   return (
     <section className="mt-10">
       <h2 className="font-mono text-sm uppercase tracking-widest text-muted-foreground">
@@ -271,7 +291,7 @@ function PricingStrip({ onBuy }: { onBuy: (pack: string) => void }) {
       </div>
       <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
         3 decodes for $4.99 · your first decode is free · one-time payment · no subscription ·
-        decodes never expire
+        decodes never expire · money-back if the decode is useless
       </p>
     </section>
   );
@@ -304,12 +324,30 @@ function PrivacyBlock() {
   );
 }
 
-function OtherArenas() {
+function ArenaNav() {
+  const arenas = [
+    { to: "/work", label: "Work / boss" },
+    { to: "/gaslighting", label: "Partner / gaslighting" },
+    { to: "/clients", label: "Clients / deals" },
+    { to: "/landlord", label: "Landlord / lease" },
+  ] as const;
   return (
-    <p className="mt-8 text-center text-sm leading-relaxed text-muted-foreground">
-      Built for work, clients and money disputes — it also handles a partner, an ex, a landlord or
-      a public fight. Switch the context chip above before you scan.
-    </p>
+    <Panel className="mt-10 p-4">
+      <p className="text-center text-sm leading-relaxed text-muted-foreground">
+        One engine. Different battlefields.
+      </p>
+      <div className="mt-3 flex flex-wrap justify-center gap-2">
+        {arenas.map((a) => (
+          <Link
+            key={a.to}
+            to={a.to}
+            className="rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground transition-colors hover:border-neon/40 hover:text-neon"
+          >
+            {a.label}
+          </Link>
+        ))}
+      </div>
+    </Panel>
   );
 }
 
@@ -528,6 +566,21 @@ export function PaywallState({
         </Panel>
       )}
 
+      {teaser.reply_preview && (
+        <Panel className="mt-4 p-4">
+          <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-neon">
+            <Eye className="h-3 w-3" /> preview — first line of your reply
+          </div>
+          <blockquote className="border-l-2 border-neon/40 pl-3 font-mono text-sm leading-relaxed text-foreground">
+            “{teaser.reply_preview}”
+          </blockquote>
+          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+            This is the opening line of one of {teaser.reply_labels.length} ready-to-send replies
+            written for this exact message.
+          </p>
+        </Panel>
+      )}
+
       <Panel className="relative mt-4 overflow-hidden p-4">
         <div className="mb-3 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
           <Fingerprint className="h-3 w-3 text-alert" /> profile_and_replies.enc
@@ -609,7 +662,7 @@ export function PaywallState({
               </button>
             ))}
             <p className="pt-1 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-              one-time payment · no subscription · decodes never expire
+              one-time payment · no subscription · decodes never expire · money-back guarantee
             </p>
           </div>
         )}
