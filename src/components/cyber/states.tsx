@@ -439,6 +439,8 @@ export function PaywallState({
   onSignIn,
   onBuy,
   onUnlock,
+  freeAvailable,
+  onFreeUnlock,
   busy,
   error,
 }: {
@@ -448,6 +450,8 @@ export function PaywallState({
   onSignIn: () => void;
   onBuy: (pack: string) => void;
   onUnlock: () => void;
+  freeAvailable: boolean;
+  onFreeUnlock: () => void;
   busy: boolean;
   error?: string | null;
 }) {
@@ -489,11 +493,25 @@ export function PaywallState({
             <AlertTriangle className="h-3 w-3 text-alert" /> detected_tactics
           </div>
           <ul className="space-y-2">
-            {teaser.pattern_names.map((name) => (
-              <li key={name} className="flex items-start gap-2 font-mono text-sm text-foreground">
-                <span className="mt-0.5 text-alert">▮</span> {name}
-              </li>
-            ))}
+            {teaser.pattern_names.map((name, i) => {
+              const slug = teaser.pattern_slugs?.[i];
+              return (
+                <li key={name} className="flex items-start gap-2 font-mono text-sm text-foreground">
+                  <span className="mt-0.5 text-alert">▮</span>
+                  {slug ? (
+                    <Link
+                      to="/tactics/$slug"
+                      params={{ slug }}
+                      className="underline decoration-dotted underline-offset-4 hover:text-neon"
+                    >
+                      {name}
+                    </Link>
+                  ) : (
+                    <span>{name}</span>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </Panel>
       )}
@@ -526,7 +544,21 @@ export function PaywallState({
           for this exact message.
         </p>
 
-        {canUnlockNow ? (
+        {freeAvailable && !canUnlockNow ? (
+          <>
+            <button
+              onClick={onFreeUnlock}
+              disabled={busy}
+              className="pulse-neon mt-4 flex w-full items-center justify-center gap-2 rounded-sm border border-neon bg-neon/15 px-4 py-4 font-mono text-sm font-bold uppercase tracking-[0.15em] text-neon transition-colors hover:bg-neon/25 disabled:opacity-50"
+            >
+              <Lock className="h-4 w-4" />
+              {busy ? "Decrypting..." : "Open my first report — free"}
+            </button>
+            <p className="mt-2 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              no account · no card · one free decode
+            </p>
+          </>
+        ) : canUnlockNow ? (
           <button
             onClick={onUnlock}
             disabled={busy}
