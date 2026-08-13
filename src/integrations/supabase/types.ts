@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      free_uses: {
+        Row: {
+          created_at: string
+          fingerprint: string
+          id: string
+          ip_hash: string
+          scan_id: string | null
+          used_on: string
+        }
+        Insert: {
+          created_at?: string
+          fingerprint: string
+          id?: string
+          ip_hash: string
+          scan_id?: string | null
+          used_on?: string
+        }
+        Update: {
+          created_at?: string
+          fingerprint?: string
+          id?: string
+          ip_hash?: string
+          scan_id?: string | null
+          used_on?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -89,6 +116,7 @@ export type Database = {
           result: Json | null
           status: string
           unlocked: boolean
+          unlocked_free: boolean
           updated_at: string
           user_id: string | null
         }
@@ -103,6 +131,7 @@ export type Database = {
           result?: Json | null
           status?: string
           unlocked?: boolean
+          unlocked_free?: boolean
           updated_at?: string
           user_id?: string | null
         }
@@ -117,6 +146,7 @@ export type Database = {
           result?: Json | null
           status?: string
           unlocked?: boolean
+          unlocked_free?: boolean
           updated_at?: string
           user_id?: string | null
         }

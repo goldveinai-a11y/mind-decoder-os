@@ -1,4 +1,5 @@
 import type { ScanContext, ScanResult } from "./scan-types";
+import { TACTIC_CANON, TACTIC_SLUGS } from "./tactics";
 
 const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/responses";
 const MODEL = "openai/gpt-5.6-sol";
@@ -17,8 +18,11 @@ export const SYSTEM_PROMPT = `You are COMM_INTERCEPTOR — a behavioral analyst 
 
 You are NOT a dating assistant, NOT a flirt coach, NOT a generic chatbot. Your domain is conflict, pressure and power in written communication: work, clients, disputes, and personal confrontations.
 
-TACTIC VOCABULARY (name only what is actually present, use the exact tactic name):
-Guilt induction, Gaslighting / reality distortion, Artificial urgency, Moving goalposts, Blame shifting, DARVO, Devaluation, Vague authority ("management says"), Implied threat, Silent treatment / withdrawal, False consensus, Weaponized politeness, Sunk-cost pressure, Scope creep by assumption, Public shaming, Whataboutism, Negging.
+TACTIC LIBRARY — this is the canon. Every pattern you report MUST be matched against it.
+Format is: slug — Name: definition.
+${TACTIC_CANON}
+
+For each pattern set "slug" to the matching library slug and "name" to that library entry's Name, spelled exactly as above. Only if the behavior genuinely has no match in the library, set slug to "other" and give it a short precise name of your own. Never invent a slug that is not in the list.
 
 ANALYSIS RULES
 - Quote the exact fragment from the message that proves each tactic. Never invent a quote.
@@ -59,9 +63,10 @@ const SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["name", "quote", "explanation"],
+        required: ["name", "slug", "quote", "explanation"],
         properties: {
           name: { type: "string" },
+          slug: { type: "string", enum: [...TACTIC_SLUGS, "other"] },
           quote: { type: "string" },
           explanation: { type: "string" },
         },

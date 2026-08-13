@@ -16,6 +16,8 @@ import { Route as HistoryRouteImport } from './routes/history'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RefundsRouteImport } from './routes/refunds'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TacticsIndexRouteImport } from './routes/tactics.index'
+import { Route as TacticsSlugRouteImport } from './routes/tactics.$slug'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -53,6 +55,16 @@ const TermsRoute = TermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TacticsIndexRoute = TacticsIndexRouteImport.update({
+  id: '/tactics/',
+  path: '/tactics/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TacticsSlugRoute = TacticsSlugRouteImport.update({
+  id: '/tactics/$slug',
+  path: '/tactics/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPaymentsWebhookRoute =
   ApiPublicPaymentsWebhookRouteImport.update({
     id: '/api/public/payments/webhook',
@@ -68,6 +80,8 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/refunds': typeof RefundsRoute
   '/terms': typeof TermsRoute
+  '/tactics/$slug': typeof TacticsSlugRoute
+  '/tactics/': typeof TacticsIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -78,6 +92,8 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/refunds': typeof RefundsRoute
   '/terms': typeof TermsRoute
+  '/tactics/$slug': typeof TacticsSlugRoute
+  '/tactics': typeof TacticsIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRoutesById {
@@ -89,6 +105,8 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/refunds': typeof RefundsRoute
   '/terms': typeof TermsRoute
+  '/tactics/$slug': typeof TacticsSlugRoute
+  '/tactics/': typeof TacticsIndexRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
 }
 export interface FileRouteTypes {
@@ -101,6 +119,8 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/refunds'
     | '/terms'
+    | '/tactics/$slug'
+    | '/tactics/'
     | '/api/public/payments/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -111,6 +131,8 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/refunds'
     | '/terms'
+    | '/tactics/$slug'
+    | '/tactics'
     | '/api/public/payments/webhook'
   id:
     | '__root__'
@@ -121,6 +143,8 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/refunds'
     | '/terms'
+    | '/tactics/$slug'
+    | '/tactics/'
     | '/api/public/payments/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -132,6 +156,8 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   RefundsRoute: typeof RefundsRoute
   TermsRoute: typeof TermsRoute
+  TacticsSlugRoute: typeof TacticsSlugRoute
+  TacticsIndexRoute: typeof TacticsIndexRoute
   ApiPublicPaymentsWebhookRoute: typeof ApiPublicPaymentsWebhookRoute
 }
 
@@ -186,6 +212,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tactics/': {
+      id: '/tactics/'
+      path: '/tactics'
+      fullPath: '/tactics/'
+      preLoaderRoute: typeof TacticsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tactics/$slug': {
+      id: '/tactics/$slug'
+      path: '/tactics/$slug'
+      fullPath: '/tactics/$slug'
+      preLoaderRoute: typeof TacticsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/payments/webhook': {
       id: '/api/public/payments/webhook'
       path: '/api/public/payments/webhook'
@@ -204,6 +244,8 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   RefundsRoute: RefundsRoute,
   TermsRoute: TermsRoute,
+  TacticsSlugRoute: TacticsSlugRoute,
+  TacticsIndexRoute: TacticsIndexRoute,
   ApiPublicPaymentsWebhookRoute: ApiPublicPaymentsWebhookRoute,
 }
 export const routeTree = rootRouteImport

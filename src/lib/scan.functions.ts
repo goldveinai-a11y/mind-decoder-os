@@ -1,11 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { analyzeTransmission } from "./analyze.server";
 import {
   MAX_TEXT_LENGTH,
   buildTeaser,
+  hashClientIp,
   newAccessToken,
   normalizeContext,
+  normalizeFingerprint,
   validateImageDataUrl,
 } from "./scan.server";
 import type { ScanResult, ScanTeaser } from "./scan-types";
@@ -80,6 +83,55 @@ export const getAccount = createServerFn({ method: "POST" })
       .eq("id", context.userId)
       .maybeSingle();
     return { credits: profile?.credits ?? 0, email: profile?.email ?? null };
+  });
+
+/** One free full report per device per day — no account required. */
+export const freeUnlockScan = createServerFn({ method: "POST" })
+  .inputValidator((input: { id: string; token: string; fingerprint: string }) => ({
+    id: input.id,
+    token: input.token,
+    fingerprint: normalizeFingerprint(input.fingerprint),
+  }))
+  .handler(async ({ data }): Promise<ScanTeaser> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
+      .from("scans")
+      .select("id, access_token, result, unlocked")
+      .eq("id", data.id)
+      .eq("access_token", data.token)
+      .maybeSingle();
+    if (!row?.result) throw new Error("Report not found.");
+
+    const result = row.result as unknown as ScanResult;
+    if (row.unlocked) return buildTeaser(row.id, row.access_token, result, true);
+
+    const request = getRequest();
+    const ipHash = await hashClientIp(request?.headers ?? new Headers());
+    const today = new Date().toISOString().slice(0, 10);
+
+    const { count } = await supabaseAdmin
+      .from("free_uses")
+      .select("id", { count: "exact", head: true })
+      .eq("ip_hash", ipHash)
+      .eq("used_on", today);
+    if ((count ?? 0) >= 3) throw new Error("FREE_USED");
+
+    const { error: claimError } = await supabaseAdmin.from("free_uses").insert({
+      fingerprint: data.fingerprint,
+      ip_hash: ipHash,
+      used_on: today,
+      scan_id: row.id,
+    });
+    if (claimError) throw new Error("FREE_USED");
+
+    const { error: unlockError } = await supabaseAdmin
+      .from("scans")
+      .update({ unlocked: true, unlocked_free: true })
+      .eq("id", row.id)
+      .eq("access_token", row.access_token);
+    if (unlockError) throw new Error("Could not unlock the report.");
+
+    return buildTeaser(row.id, row.access_token, result, true);
   });
 
 export const unlockScan = createServerFn({ method: "POST" })

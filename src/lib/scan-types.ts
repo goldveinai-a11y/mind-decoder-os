@@ -9,6 +9,8 @@ export type ScanContext = (typeof SCAN_CONTEXTS)[number]["id"];
 
 export type Pattern = {
   name: string;
+  /** Slug from the tactic library, or "other" when nothing matches. */
+  slug?: string;
   quote: string;
   explanation: string;
 };
@@ -35,6 +37,7 @@ export type ScanTeaser = {
   threat_level: string;
   headline: string;
   pattern_names: string[];
+  pattern_slugs: (string | null)[];
   patterns: Pattern[] | null;
   motive: string | null;
   weak_point: string | null;

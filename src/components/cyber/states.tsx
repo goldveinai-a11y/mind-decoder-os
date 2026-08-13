@@ -17,9 +17,11 @@ import {
   UserX,
   X,
 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Panel } from "./Frame";
 import { Radar } from "./Radar";
 import { SCAN_CONTEXTS, CREDIT_PACKS, type ScanContext, type ScanTeaser } from "@/lib/scan-types";
+import { SHOWCASE_SLUGS, TACTICS, getTactic } from "@/lib/tactics";
 
 const fade = {
   initial: { opacity: 0, y: 12 },
@@ -73,15 +75,23 @@ export function InputState({
         <Activity className="h-3.5 w-3.5" /> secure channel open
       </div>
       <h1 className="font-mono text-4xl font-bold leading-tight text-foreground sm:text-5xl">
-        Decode <span className="text-neon text-glow">Hidden Motives.</span>
+        They’re using a tactic.
         <br />
-        Win <span className="text-neon text-glow">the Exchange.</span>
+        It has <span className="text-neon text-glow">a name.</span>
       </h1>
-      <p className="mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-        Paste a message from your boss, client, partner, or ex — or from whoever’s tearing
-        you apart in the comments. Our AI radar will detect gaslighting, bluffs, and hidden
-        agendas — then writes the reply that ends it.
+      <p className="mt-4 max-w-xl text-base leading-relaxed text-foreground sm:text-lg">
+        You don’t win the argument. You just stop losing.
       </p>
+      <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+        Paste the message from your boss, your manager, HR or a client. Unbluff names the play
+        they’re running — false deadline, blame trail, moving goalposts — and writes the reply you
+        can send as-is.
+      </p>
+
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10px] uppercase tracking-widest text-neon/70">
+        <span>first decode free · no account</span>
+        <span className="text-muted-foreground">then $4.99 · no subscription</span>
+      </div>
 
       <div className="mt-7 flex flex-wrap gap-2">
         {SCAN_CONTEXTS.map((c) => (
@@ -155,14 +165,119 @@ export function InputState({
         onClick={submit}
         className="pulse-neon mt-6 flex w-full items-center justify-center gap-2 rounded-sm border border-neon bg-neon/10 px-6 py-4 font-mono text-sm font-bold uppercase tracking-[0.2em] text-neon transition-colors hover:bg-neon/20 active:scale-[0.99]"
       >
-        <Crosshair className="h-4 w-4" /> Initialize Scan
+        <Crosshair className="h-4 w-4" /> Show me what they’re doing
       </button>
 
       <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-[0.15em] text-neon/50">
         No shouting. No insults. You just stop losing.
       </p>
 
-      <div className="mt-5 grid grid-cols-3 gap-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+      <ChatGptObjection />
+      <Showcase />
+      <PricingStrip />
+      <PrivacyBlock />
+      <OtherArenas />
+    </motion.section>
+  );
+}
+
+/* ---------------- LANDING BLOCKS ---------------- */
+
+function ChatGptObjection() {
+  return (
+    <Panel className="mt-10 p-5">
+      <div className="font-mono text-[10px] uppercase tracking-widest text-amber">
+        why not just ask chatgpt
+      </div>
+      <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">
+        ChatGPT will write you a polite paragraph. It will not tell you that the message is a{" "}
+        <span className="text-neon">false deadline</span> — because to ask that, you already have to
+        know it’s a false deadline. Unbluff starts one step earlier: it names the play first, then
+        answers it.
+      </p>
+      <Link
+        to="/tactics"
+        className="mt-3 inline-block font-mono text-[10px] uppercase tracking-widest text-neon underline underline-offset-4"
+      >
+        see all {TACTICS.length} tactics →
+      </Link>
+    </Panel>
+  );
+}
+
+function Showcase() {
+  const items = SHOWCASE_SLUGS.map((s) => getTactic(s)).filter(Boolean);
+  return (
+    <section className="mt-10">
+      <h2 className="font-mono text-sm uppercase tracking-widest text-muted-foreground">
+        Three real messages, decoded
+      </h2>
+      <div className="mt-3 space-y-3">
+        {items.map((t) => (
+          <Panel key={t!.slug} className="p-4">
+            <p className="border-l-2 border-alert/50 pl-3 font-mono text-[13px] italic text-alert/90">
+              “{t!.sounds_like}”
+            </p>
+            <div className="mt-3 font-mono text-[10px] uppercase tracking-widest text-amber">
+              tactic detected — {t!.name}
+            </div>
+            <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+              {t!.really_doing}
+            </p>
+            <div className="mt-3 font-mono text-[10px] uppercase tracking-widest text-neon">
+              your reply
+            </div>
+            <pre className="mt-1.5 whitespace-pre-wrap font-mono text-[12px] leading-6 text-neon/90">
+              {t!.reply}
+            </pre>
+          </Panel>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PricingStrip() {
+  return (
+    <section className="mt-10">
+      <h2 className="font-mono text-sm uppercase tracking-widest text-muted-foreground">
+        What it costs
+      </h2>
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        {CREDIT_PACKS.map((p) => (
+          <Panel key={p.id} className="p-4 text-center">
+            <div className="font-mono text-2xl font-bold text-neon">
+              ${(p.amountCents / 100).toFixed(2)}
+            </div>
+            <div className="mt-1 font-mono text-[11px] uppercase tracking-widest text-foreground">
+              {p.label}
+            </div>
+            <div className="mt-0.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              {p.note}
+            </div>
+          </Panel>
+        ))}
+      </div>
+      <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        your first decode is free · one-time payment · no subscription · decodes never expire
+      </p>
+    </section>
+  );
+}
+
+function PrivacyBlock() {
+  return (
+    <Panel className="mt-10 p-5">
+      <div className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-widest text-amber">
+        <Lock className="h-3 w-3" /> what happens to your message
+      </div>
+      <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">
+        Work messages are sensitive, so this isn’t small print. Your text is sent over an encrypted
+        connection, analysed once, and kept only so you can reopen your own report. It is never
+        used to train models, never shown to anyone else, and never tied to your employer. You can
+        run your first decode without an account at all.
+      </p>
+      <div className="mt-4 grid grid-cols-3 gap-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
         <span className="flex items-center gap-1">
           <Lock className="h-3 w-3 text-neon/70" /> encrypted
         </span>
@@ -170,10 +285,19 @@ export function InputState({
           <UserX className="h-3 w-3 text-neon/70" /> anonymous
         </span>
         <span className="flex items-center gap-1">
-          <Eye className="h-3 w-3 text-neon/70" /> no logs
+          <Eye className="h-3 w-3 text-neon/70" /> not training data
         </span>
       </div>
-    </motion.section>
+    </Panel>
+  );
+}
+
+function OtherArenas() {
+  return (
+    <p className="mt-8 text-center text-sm leading-relaxed text-muted-foreground">
+      Built for work and clients — it also handles a partner, an ex or a landlord. Switch the
+      context chip above before you scan.
+    </p>
   );
 }
 
@@ -315,6 +439,8 @@ export function PaywallState({
   onSignIn,
   onBuy,
   onUnlock,
+  freeAvailable,
+  onFreeUnlock,
   busy,
   error,
 }: {
@@ -324,6 +450,8 @@ export function PaywallState({
   onSignIn: () => void;
   onBuy: (pack: string) => void;
   onUnlock: () => void;
+  freeAvailable: boolean;
+  onFreeUnlock: () => void;
   busy: boolean;
   error?: string | null;
 }) {
@@ -365,11 +493,25 @@ export function PaywallState({
             <AlertTriangle className="h-3 w-3 text-alert" /> detected_tactics
           </div>
           <ul className="space-y-2">
-            {teaser.pattern_names.map((name) => (
-              <li key={name} className="flex items-start gap-2 font-mono text-sm text-foreground">
-                <span className="mt-0.5 text-alert">▮</span> {name}
-              </li>
-            ))}
+            {teaser.pattern_names.map((name, i) => {
+              const slug = teaser.pattern_slugs?.[i];
+              return (
+                <li key={name} className="flex items-start gap-2 font-mono text-sm text-foreground">
+                  <span className="mt-0.5 text-alert">▮</span>
+                  {slug ? (
+                    <Link
+                      to="/tactics/$slug"
+                      params={{ slug }}
+                      className="underline decoration-dotted underline-offset-4 hover:text-neon"
+                    >
+                      {name}
+                    </Link>
+                  ) : (
+                    <span>{name}</span>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </Panel>
       )}
@@ -402,7 +544,21 @@ export function PaywallState({
           for this exact message.
         </p>
 
-        {canUnlockNow ? (
+        {freeAvailable && !canUnlockNow ? (
+          <>
+            <button
+              onClick={onFreeUnlock}
+              disabled={busy}
+              className="pulse-neon mt-4 flex w-full items-center justify-center gap-2 rounded-sm border border-neon bg-neon/15 px-4 py-4 font-mono text-sm font-bold uppercase tracking-[0.15em] text-neon transition-colors hover:bg-neon/25 disabled:opacity-50"
+            >
+              <Lock className="h-4 w-4" />
+              {busy ? "Decrypting..." : "Open my first report — free"}
+            </button>
+            <p className="mt-2 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              no account · no card · one free decode
+            </p>
+          </>
+        ) : canUnlockNow ? (
           <button
             onClick={onUnlock}
             disabled={busy}
@@ -511,7 +667,19 @@ export function UnlockedState({
                 <div className="flex gap-3">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-alert" />
                   <div className="min-w-0">
-                    <div className="font-mono text-sm font-bold text-foreground">{t.name}</div>
+                    <div className="font-mono text-sm font-bold text-foreground">
+                      {t.slug && getTactic(t.slug) ? (
+                        <Link
+                          to="/tactics/$slug"
+                          params={{ slug: t.slug }}
+                          className="underline decoration-dotted underline-offset-4 hover:text-neon"
+                        >
+                          {t.name}
+                        </Link>
+                      ) : (
+                        t.name
+                      )}
+                    </div>
                     {t.quote && (
                       <p className="mt-1.5 border-l-2 border-alert/50 pl-2 font-mono text-[12px] italic text-alert/80">
                         “{t.quote}”
