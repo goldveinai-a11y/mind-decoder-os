@@ -27,9 +27,17 @@ class ChiptuneEngine {
   private enabled = false;
   private active = false;
   private unlockBound = false;
+  private preferenceLoaded = false;
 
   constructor() {
     if (typeof window === "undefined") return;
+    this.loadBrowserPreference();
+  }
+
+  /** SSR can create the singleton before `window` exists, so hydrate lazily. */
+  private loadBrowserPreference() {
+    if (this.preferenceLoaded || typeof window === "undefined") return;
+    this.preferenceLoaded = true;
     // Sound is ON by default; users can mute it from the header toggle.
     this.enabled = localStorage.getItem(STORAGE_KEY) !== "0";
     this.bindUnlock();
@@ -59,10 +67,12 @@ class ChiptuneEngine {
   }
 
   isEnabled() {
+    this.loadBrowserPreference();
     return this.enabled;
   }
 
   setEnabled(value: boolean) {
+    this.loadBrowserPreference();
     this.enabled = value;
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEY, value ? "1" : "0");
@@ -83,6 +93,7 @@ class ChiptuneEngine {
 
   /** Start the urgent 8-bit loop. Safe to call repeatedly. */
   playLoop() {
+    this.loadBrowserPreference();
     if (!this.enabled) return;
     this.init();
     void this.ctx?.resume();
@@ -111,6 +122,7 @@ class ChiptuneEngine {
 
   /** Short confirmation / unlock blip. */
   blipSuccess() {
+    this.loadBrowserPreference();
     if (!this.enabled) return;
     this.init();
     void this.ctx?.resume();
@@ -122,6 +134,7 @@ class ChiptuneEngine {
 
   /** Short scan-start blip. */
   blipScan() {
+    this.loadBrowserPreference();
     if (!this.enabled) return;
     this.init();
     void this.ctx?.resume();
