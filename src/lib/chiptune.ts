@@ -10,6 +10,12 @@ type Envelope = {
   release: number;
 };
 
+type Step = {
+  bass: number;
+  lead: number;
+  noise?: boolean;
+};
+
 const STORAGE_KEY = "unbluff_sound_enabled";
 
 class ChiptuneEngine {
@@ -119,6 +125,7 @@ class ChiptuneEngine {
     for (let i = 0; i < steps; i++) {
       const stepTime = t + i * tempo;
       const step = pattern[i % pattern.length];
+      if (!step) continue;
 
       if (step.bass) {
         this.playTone(step.bass, tempo * 0.95, stepTime, "square", {
@@ -147,10 +154,10 @@ class ChiptuneEngine {
     this.loopTimeouts.push(id);
   }
 
-  private buildPattern() {
+  private buildPattern(): Step[] {
     // Tense minor-key arpeggio with driving bass.
-    const bassLine = [110, 110, 130, 110, 98, 98, 110, 98];
-    const leadLine = [
+    const bassLine: number[] = [110, 110, 130, 110, 98, 98, 110, 98];
+    const leadLine: number[][] = [
       [440, 523, 659],
       [440, 523, 659],
       [466, 554, 698],
@@ -160,11 +167,14 @@ class ChiptuneEngine {
       [415, 494, 622],
       [392, 466, 587],
     ];
-    const steps: { bass?: number; lead?: number; noise?: boolean }[] = [];
+    const steps: Step[] = [];
     for (let bar = 0; bar < 8; bar++) {
       for (let beat = 0; beat < 4; beat++) {
-        const bass = bassLine[(bar * 2 + Math.floor(beat / 2)) % bassLine.length];
-        const chord = leadLine[bar % leadLine.length];
+        const bassIndex = (bar * 2 + Math.floor(beat / 2)) % bassLine.length;
+        const chordIndex = bar % leadLine.length;
+        const bass = bassLine[bassIndex];
+        const chord = leadLine[chordIndex];
+        if (!bass || !chord) continue;
         steps.push({ bass, lead: chord[beat % 3], noise: beat === 1 || beat === 3 });
         steps.push({ bass, lead: chord[(beat + 1) % 3] });
         steps.push({ bass, lead: chord[(beat + 2) % 3] });

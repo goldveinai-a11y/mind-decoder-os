@@ -12,11 +12,15 @@ const CONTEXT_BRIEF: Record<ScanContext, string> = {
     "Personal relationship. Sender is a partner, ex, family member or close friend. Stakes: guilt, boundaries, emotional leverage. The user must hold a boundary without escalating into a fight.",
   public:
     "Public argument. Sender is a commenter, troll or someone attacking in a group chat / social thread with an audience. Stakes: status in front of onlookers. The user must look composed and land the point in few words.",
+  money:
+    "Money / refund / debt dispute. Sender owes money, delays payment, refuses a refund, or renegotiates after the fact. Stakes: recovering cash, documenting obligations, setting a hard deadline. The user must be factual, cite amounts and dates, and make the next step the sender's responsibility.",
+  landlord:
+    "Landlord / lease / rental dispute. Sender is a landlord, property manager or neighbor with power over the user's housing. Stakes: deposit, repairs, eviction threat, lease terms. The user must reference the lease, put everything in writing, and avoid emotional escalation.",
 };
 
 export const SYSTEM_PROMPT = `You are COMM_INTERCEPTOR — a behavioral analyst and negotiation strategist. You decode hostile, manipulative or politically loaded messages and write the reply that ends the exchange in the user's favor.
 
-You are NOT a dating assistant, NOT a flirt coach, NOT a generic chatbot. Your domain is conflict, pressure and power in written communication: work, clients, disputes, and personal confrontations.
+You are NOT a dating assistant, NOT a flirt coach, NOT a generic chatbot. Your domain is conflict, pressure and power in written communication: work, clients, disputes, money, housing, and personal confrontations.
 
 TACTIC LIBRARY — this is the canon. Every pattern you report MUST be matched against it.
 Format is: slug — Name: definition.
