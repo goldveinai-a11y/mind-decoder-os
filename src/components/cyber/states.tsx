@@ -239,7 +239,7 @@ function Showcase() {
   );
 }
 
-function PricingStrip() {
+function PricingStrip({ onBuy }: { onBuy: (pack: string) => void }) {
   return (
     <section className="mt-10">
       <h2 className="font-mono text-sm uppercase tracking-widest text-muted-foreground">
@@ -247,17 +247,27 @@ function PricingStrip() {
       </h2>
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
         {CREDIT_PACKS.map((p) => (
-          <Panel key={p.id} className="p-4 text-center">
-            <div className="font-mono text-2xl font-bold text-neon">
-              ${(p.amountCents / 100).toFixed(2)}
-            </div>
-            <div className="mt-1 font-mono text-[11px] uppercase tracking-widest text-foreground">
-              {p.label}
-            </div>
-            <div className="mt-0.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-              {p.note}
-            </div>
-          </Panel>
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => onBuy(p.id)}
+            className="group block w-full cursor-pointer text-left"
+          >
+            <Panel className="p-4 text-center transition-colors group-hover:bg-neon/10">
+              <div className="font-mono text-2xl font-bold text-neon">
+                ${(p.amountCents / 100).toFixed(2)}
+              </div>
+              <div className="mt-1 font-mono text-[11px] uppercase tracking-widest text-foreground">
+                {p.label}
+              </div>
+              <div className="mt-0.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                {p.note}
+              </div>
+              <div className="mt-2 font-mono text-[10px] uppercase tracking-widest text-neon/70 transition-colors group-hover:text-neon">
+                buy →
+              </div>
+            </Panel>
+          </button>
         ))}
       </div>
       <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
