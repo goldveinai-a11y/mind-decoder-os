@@ -170,7 +170,7 @@ export function InputState({
       </button>
 
       <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-[0.15em] text-neon/50">
-        No shouting. No insults. You just stop losing.
+        No shouting. No insults. Just the reply that ends it.
       </p>
 
       <ChatGptObjection />
@@ -270,7 +270,8 @@ function PricingStrip({ onBuy }: { onBuy: (pack: string) => void }) {
         ))}
       </div>
       <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-        your first decode is free · one-time payment · no subscription · decodes never expire
+        3 decodes for $4.99 · your first decode is free · one-time payment · no subscription ·
+        decodes never expire
       </p>
     </section>
   );

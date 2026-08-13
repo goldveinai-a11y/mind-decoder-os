@@ -2,9 +2,9 @@ export const SCAN_CONTEXTS = [
   { id: "work", label: "Work / boss" },
   { id: "client", label: "Client / deal" },
   { id: "relationship", label: "Partner / ex" },
-  { id: "public", label: "Public fight" },
   { id: "money", label: "Money / refund" },
   { id: "landlord", label: "Landlord / lease" },
+  { id: "public", label: "Public fight" },
 ] as const;
 
 export type ScanContext = (typeof SCAN_CONTEXTS)[number]["id"];

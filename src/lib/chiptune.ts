@@ -26,10 +26,26 @@ class ChiptuneEngine {
   private loopTimeouts: number[] = [];
   private enabled = false;
   private active = false;
+  private unlockBound = false;
 
   constructor() {
     if (typeof window === "undefined") return;
-    this.enabled = localStorage.getItem(STORAGE_KEY) === "1";
+    // Sound is ON by default; users can mute it from the header toggle.
+    this.enabled = localStorage.getItem(STORAGE_KEY) !== "0";
+    this.bindUnlock();
+  }
+
+  /** Browsers block audio until the first user gesture — arm the context then. */
+  private bindUnlock() {
+    if (this.unlockBound || typeof window === "undefined") return;
+    this.unlockBound = true;
+    const unlock = () => {
+      if (!this.enabled) return;
+      this.init();
+      void this.ctx?.resume();
+    };
+    window.addEventListener("pointerdown", unlock, { passive: true });
+    window.addEventListener("keydown", unlock);
   }
 
   private init() {
@@ -69,6 +85,7 @@ class ChiptuneEngine {
   playLoop() {
     if (!this.enabled) return;
     this.init();
+    void this.ctx?.resume();
     if (!this.ctx || !this.master || this.active) return;
     this.active = true;
     this.scheduleLoop();
@@ -96,6 +113,7 @@ class ChiptuneEngine {
   blipSuccess() {
     if (!this.enabled) return;
     this.init();
+    void this.ctx?.resume();
     if (!this.ctx || !this.master) return;
     const now = this.ctx.currentTime;
     this.playTone(880, 0.08, now, "square", { attack: 0.01, decay: 0.05, sustain: 0.1, release: 0.1 });
@@ -106,6 +124,7 @@ class ChiptuneEngine {
   blipScan() {
     if (!this.enabled) return;
     this.init();
+    void this.ctx?.resume();
     if (!this.ctx || !this.master) return;
     const now = this.ctx.currentTime;
     this.playTone(440, 0.12, now, "sawtooth", { attack: 0.01, decay: 0.08, sustain: 0.2, release: 0.1 });
