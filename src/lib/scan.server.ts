@@ -49,6 +49,12 @@ export function buildTeaser(
   result: ScanResult,
   unlocked: boolean,
 ): ScanTeaser {
+  const firstReply = result.replies[0]?.text ?? "";
+  const replyPreview = firstReply
+    .split(/\n+/)
+    .map((s) => s.trim())
+    .filter(Boolean)[0];
+
   const base = {
     id,
     token,
@@ -60,6 +66,7 @@ export function buildTeaser(
       p.slug && TACTIC_SLUGS.includes(p.slug) ? p.slug : null,
     ),
     reply_labels: result.replies.map((r) => r.label),
+    reply_preview: replyPreview || null,
   };
 
   if (!unlocked) {

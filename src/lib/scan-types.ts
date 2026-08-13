@@ -45,6 +45,7 @@ export type ScanTeaser = {
   weak_point: string | null;
   replies: Reply[] | null;
   reply_labels: string[];
+  reply_preview: string | null;
 };
 
 export const CREDIT_PACKS = [
