@@ -25,6 +25,24 @@ export function newAccessToken(): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+export function normalizeFingerprint(value: unknown): string {
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (!/^[a-z0-9-]{8,64}$/i.test(raw)) throw new Error("Invalid device marker.");
+  return raw.toLowerCase();
+}
+
+/** One-way hash of the caller IP — the address itself is never stored. */
+export async function hashClientIp(headers: Headers): Promise<string> {
+  const ip =
+    headers.get("cf-connecting-ip") ??
+    headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    headers.get("x-real-ip") ??
+    "unknown";
+  const data = new TextEncoder().encode(`unbluff:free:${ip}`);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 export function buildTeaser(
   id: string,
   token: string,

@@ -134,18 +134,6 @@ export const freeUnlockScan = createServerFn({ method: "POST" })
     return buildTeaser(row.id, row.access_token, result, true);
   });
 
-export const getAccountLegacy = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<{ credits: number; email: string | null }> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("credits, email")
-      .eq("id", context.userId)
-      .maybeSingle();
-    return { credits: profile?.credits ?? 0, email: profile?.email ?? null };
-  });
-
 export const unlockScan = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { id: string; token: string }) => input)
