@@ -175,10 +175,13 @@ class ChiptuneEngine {
         const bass = bassLine[bassIndex];
         const chord = leadLine[chordIndex];
         if (!bass || !chord) continue;
-        steps.push({ bass, lead: chord[beat % 3], noise: beat === 1 || beat === 3 });
-        steps.push({ bass, lead: chord[(beat + 1) % 3] });
-        steps.push({ bass, lead: chord[(beat + 2) % 3] });
-        steps.push({ bass, lead: chord[beat % 3], noise: beat === 3 });
+        const lead1 = chord[beat % 3]!;
+        const lead2 = chord[(beat + 1) % 3]!;
+        const lead3 = chord[(beat + 2) % 3]!;
+        steps.push({ bass, lead: lead1, noise: beat === 1 || beat === 3 });
+        steps.push({ bass, lead: lead2 });
+        steps.push({ bass, lead: lead3 });
+        steps.push({ bass, lead: lead1, noise: beat === 3 });
       }
     }
     return steps;
