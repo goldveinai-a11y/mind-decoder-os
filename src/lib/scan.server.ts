@@ -1,5 +1,6 @@
 import type { ScanContext, ScanResult, ScanTeaser } from "./scan-types";
 import { SCAN_CONTEXTS } from "./scan-types";
+import { TACTIC_SLUGS } from "./tactics";
 
 export const MAX_TEXT_LENGTH = 8000;
 export const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
@@ -37,6 +38,9 @@ export function buildTeaser(
     threat_level: result.threat_level,
     headline: result.headline,
     pattern_names: result.patterns.map((p) => p.name),
+    pattern_slugs: result.patterns.map((p) =>
+      p.slug && TACTIC_SLUGS.includes(p.slug) ? p.slug : null,
+    ),
     reply_labels: result.replies.map((r) => r.label),
   };
 
