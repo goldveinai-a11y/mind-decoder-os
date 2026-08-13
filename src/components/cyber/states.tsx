@@ -306,8 +306,8 @@ function PrivacyBlock() {
 function OtherArenas() {
   return (
     <p className="mt-8 text-center text-sm leading-relaxed text-muted-foreground">
-      Built for work and clients — it also handles a partner, an ex or a landlord. Switch the
-      context chip above before you scan.
+      Built for work, clients and money disputes — it also handles a partner, an ex, a landlord or
+      a public fight. Switch the context chip above before you scan.
     </p>
   );
 }
