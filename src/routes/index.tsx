@@ -179,6 +179,7 @@ function Index() {
       const full = await unlockScan({ data: { id: teaser.id, token: teaser.token } });
       setTeaser(full);
       setStage("unlocked");
+      chiptune.blipSuccess();
       void refreshCredits();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Could not unlock the report.";
