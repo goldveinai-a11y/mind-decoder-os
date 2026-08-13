@@ -7,9 +7,11 @@ import { InputState, ScanningState, PaywallState, UnlockedState } from "@/compon
 import { PackCheckout } from "@/components/cyber/Checkout";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { SiteFooter } from "@/components/cyber/Legal";
+import { SoundToggle } from "@/components/cyber/SoundToggle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { freeUnlockScan, getAccount, getScan, runScan, unlockScan } from "@/lib/scan.functions";
+import { chiptune } from "@/lib/chiptune";
 import type { ScanContext, ScanTeaser } from "@/lib/scan-types";
 
 export const Route = createFileRoute("/")({
@@ -143,6 +145,8 @@ function Index() {
     setError(null);
     setScanDone(false);
     setStage("scanning");
+    chiptune.blipScan();
+    chiptune.playLoop();
     const started = Date.now();
     try {
       const t = await runScan({
@@ -156,10 +160,12 @@ function Index() {
       sessionStorage.setItem(STORE_KEY, JSON.stringify({ id: t.id, token: t.token }));
       const wait = Math.max(0, 8000 - (Date.now() - started));
       window.setTimeout(() => {
+        chiptune.stopLoop();
         setTeaser(t);
         setStage("paywall");
       }, wait + 600);
     } catch (e) {
+      chiptune.stopLoop();
       setError(e instanceof Error ? e.message : "The scan failed. Try again.");
       setStage("input");
     }
@@ -173,6 +179,7 @@ function Index() {
       const full = await unlockScan({ data: { id: teaser.id, token: teaser.token } });
       setTeaser(full);
       setStage("unlocked");
+      chiptune.blipSuccess();
       void refreshCredits();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Could not unlock the report.";
@@ -195,6 +202,7 @@ function Index() {
       setFreeAvailable(false);
       setTeaser(full);
       setStage("unlocked");
+      chiptune.blipSuccess();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Could not unlock the report.";
       if (msg.includes("FREE_USED")) {
@@ -241,6 +249,7 @@ function Index() {
             </span>
           </div>
           <div className="flex shrink-0 items-center gap-3">
+            <SoundToggle />
             {session ? (
               <>
                 <span className="flex items-center gap-1 font-mono text-[10px] uppercase tracking-widest text-amber">
