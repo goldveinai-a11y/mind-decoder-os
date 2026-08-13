@@ -94,12 +94,12 @@ export function InputState({
         <span>first decode free · no account · no subscription</span>
       </div>
 
-      <div className="mt-7 flex flex-wrap gap-2">
+      <div className="mt-7 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         {SCAN_CONTEXTS.map((c) => (
           <button
             key={c.id}
             onClick={() => setContext(c.id)}
-            className={`rounded-sm border px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest transition-colors ${
+            className={`rounded-sm border px-3 py-1.5 text-center font-mono text-[10px] uppercase tracking-widest transition-colors ${
               context === c.id
                 ? "border-neon bg-neon/15 text-neon"
                 : "border-border text-muted-foreground hover:border-neon/40 hover:text-neon"
