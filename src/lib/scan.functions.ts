@@ -85,6 +85,30 @@ export const getAccount = createServerFn({ method: "POST" })
     return { credits: profile?.credits ?? 0, email: profile?.email ?? null };
   });
 
+/** One-click quality signal on an unlocked report. */
+export const rateScan = createServerFn({ method: "POST" })
+  .inputValidator((input: { id: string; token: string; verdict: string }) => {
+    if (input.verdict !== "accurate" && input.verdict !== "off") {
+      throw new Error("Invalid verdict.");
+    }
+    return { id: input.id, token: input.token, verdict: input.verdict };
+  })
+  .handler(async ({ data }): Promise<{ ok: boolean }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
+      .from("scans")
+      .select("id")
+      .eq("id", data.id)
+      .eq("access_token", data.token)
+      .maybeSingle();
+    if (!row) throw new Error("Report not found.");
+
+    await supabaseAdmin
+      .from("scan_feedback")
+      .upsert({ scan_id: row.id, verdict: data.verdict }, { onConflict: "scan_id" });
+    return { ok: true };
+  });
+
 /** One free full report per device per day — no account required. */
 export const freeUnlockScan = createServerFn({ method: "POST" })
   .inputValidator((input: { id: string; token: string; fingerprint: string }) => ({
