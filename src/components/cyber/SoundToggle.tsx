@@ -7,16 +7,12 @@ export function SoundToggle() {
 
   useEffect(() => {
     setOn(chiptune.isEnabled());
-    if (chiptune.isEnabled()) chiptune.playLoop();
   }, []);
 
   const toggle = () => {
     const next = chiptune.toggle();
     setOn(next);
-    if (next) {
-      chiptune.blipSuccess();
-      chiptune.playLoop();
-    }
+    if (next) chiptune.blipSuccess();
   };
 
   return (
