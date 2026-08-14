@@ -4,7 +4,6 @@ import {
   Activity,
   AlertTriangle,
   Check,
-  Copy,
   Crosshair,
   Eye,
   Fingerprint,
@@ -21,6 +20,7 @@ import {
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Panel } from "./Frame";
+import { CopyButton } from "./CopyButton";
 import { Radar } from "./Radar";
 import { SCAN_CONTEXTS, CREDIT_PACKS, type ScanContext, type ScanTeaser } from "@/lib/scan-types";
 import { SHOWCASE_SLUGS, TACTICS, getTactic } from "@/lib/tactics";
@@ -691,20 +691,7 @@ export function PaywallState({
 /* ---------------- STATE 4 ---------------- */
 
 function CopyBlock({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <button
-      onClick={() => {
-        navigator.clipboard?.writeText(text);
-        setCopied(true);
-        window.setTimeout(() => setCopied(false), 2000);
-      }}
-      className="mt-3 flex w-full items-center justify-center gap-2 rounded-sm border border-neon bg-neon/10 px-4 py-2.5 font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-neon transition-colors hover:bg-neon/20"
-    >
-      {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-      {copied ? "Copied" : "Copy reply"}
-    </button>
-  );
+  return <CopyButton text={text} className="mt-3" />;
 }
 
 export function UnlockedState({

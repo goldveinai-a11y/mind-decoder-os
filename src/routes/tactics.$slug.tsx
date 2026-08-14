@@ -1,6 +1,8 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { AlertTriangle, ArrowLeft, Eye, Swords } from "lucide-react";
+import { useState } from "react";
 import { Backdrop, Panel } from "@/components/cyber/Frame";
+import { CopyButton, copyText } from "@/components/cyber/CopyButton";
 import { SiteFooter } from "@/components/cyber/Legal";
 import { ARENA_LABEL, TACTICS, getTactic } from "@/lib/tactics";
 
@@ -50,6 +52,7 @@ function TacticMissing() {
 
 function TacticPage() {
   const { tactic } = Route.useLoaderData();
+  const [copied, setCopied] = useState(false);
   const related = TACTICS.filter((t) => t.arena === tactic.arena && t.slug !== tactic.slug).slice(
     0,
     4,
@@ -97,19 +100,48 @@ function TacticPage() {
           <Swords className="h-4 w-4" /> The reply that answers it
         </h2>
         <Panel className="mt-3 p-4">
-          <pre className="whitespace-pre-wrap font-mono text-[13px] leading-6 text-neon/90">
-            {tactic.reply}
-          </pre>
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => {
+              copyText(tactic.reply);
+              setCopied(true);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                copyText(tactic.reply);
+                setCopied(true);
+              }
+            }}
+            className="cursor-pointer rounded-sm transition-colors hover:bg-neon/5"
+          >
+            <pre className="whitespace-pre-wrap font-mono text-[13px] leading-6 text-neon/90">
+              {tactic.reply}
+            </pre>
+          </div>
+          <CopyButton
+            text={tactic.reply}
+            onCopied={() => setCopied(true)}
+            className="mt-3"
+          />
           <p className="mt-3 border-t border-neon/15 pt-3 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-            square brackets = the one fact only you know
+            tap the text to copy · square brackets = the one fact only you know
           </p>
         </Panel>
 
         <Panel className="mt-8 p-5">
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            This is the generic version. Paste the actual message and Unbluff writes the reply for
-            your exact wording, history and stakes.
-          </p>
+          {copied ? (
+            <p className="text-sm leading-relaxed text-foreground">
+              <span className="font-mono text-neon">Copied.</span> Want the reply written for your
+              exact message — their wording, your history, what's at stake? Paste it in. First
+              decode is free.
+            </p>
+          ) : (
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              This is the generic version. Paste the actual message and Unbluff writes the reply for
+              your exact wording, history and stakes.
+            </p>
+          )}
           <Link
             to="/"
             className="pulse-neon mt-4 flex w-full items-center justify-center rounded-sm border border-neon bg-neon/10 px-6 py-3.5 font-mono text-sm font-bold uppercase tracking-[0.2em] text-neon hover:bg-neon/20"
