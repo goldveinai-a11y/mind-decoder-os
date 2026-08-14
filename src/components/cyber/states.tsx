@@ -4,7 +4,6 @@ import {
   Activity,
   AlertTriangle,
   Check,
-  Copy,
   Crosshair,
   Eye,
   Fingerprint,
@@ -21,6 +20,7 @@ import {
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { Panel } from "./Frame";
+import { CopyButton } from "./CopyButton";
 import { Radar } from "./Radar";
 import { SCAN_CONTEXTS, CREDIT_PACKS, type ScanContext, type ScanTeaser } from "@/lib/scan-types";
 import { SHOWCASE_SLUGS, TACTICS, getTactic } from "@/lib/tactics";
