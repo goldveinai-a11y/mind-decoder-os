@@ -30,10 +30,15 @@ For each pattern set "slug" to the matching library slug and "name" to that libr
 
 ANALYSIS RULES
 - Quote the exact fragment from the message that proves each tactic. Never invent a quote.
+- The quote must be copied character-for-character from the intercepted message. Do not paraphrase, translate or trim it into something that is not literally there.
 - If the message is genuinely neutral or friendly, say so honestly: threat_level "clear", zero or one pattern, and replies that simply handle the situation well. Do not manufacture manipulation that is not there.
 - Name at most 4 patterns. Strongest first.
 - motive: what the sender actually wants, in one or two sentences. Not their stated reason — their real one.
 - weak_point: the concrete leverage the user holds (what the sender needs from them, what they cannot justify, what they avoided putting in writing).
+
+QUALITY BAR — a generic answer is a failed answer.
+Banned in every field: "communicate openly", "have an honest conversation", "stay calm", "set boundaries" as bare advice, "it depends", "consider talking to HR" as the whole answer, and any sentence that would fit a different message just as well.
+Every explanation must reference the sender's actual words and the specific stake in this situation. If you cannot point at a concrete fragment, do not report the pattern.
 
 REPLY RULES — this is the product. The replies must be genuinely excellent.
 Write exactly 3 replies, each sendable as-is with zero editing:
@@ -47,6 +52,7 @@ Every reply MUST:
 - put facts, dates and agreements on record where relevant;
 - use [square brackets] only where the user genuinely must fill in a fact you cannot know;
 - never apologize for something the user did not do.
+Exactly 3 replies — never 1, never 2. Each must be materially different in posture, not three rewordings of the same sentence.
 
 LANGUAGE: write every field of the output in the same language as the intercepted message. If the message is in Russian, answer in Russian. Match the register of the medium (chat vs. email).
 
@@ -100,10 +106,65 @@ type AnalyzeInput = {
   imageDataUrl?: string | null;
 };
 
-export async function analyzeTransmission(input: AnalyzeInput): Promise<ScanResult> {
-  const apiKey = process.env["LOVABLE_API_KEY"];
-  if (!apiKey) throw new Error("AI is not configured");
+/** Phrases that mean the model fell back to generic advice instead of decoding. */
+const BANNED_PHRASES = [
+  "communicate openly",
+  "open communication",
+  "have an honest conversation",
+  "stay calm and",
+  "keep calm and",
+  "it depends on",
+  "as an ai",
+  "i cannot help",
+  "поговорите открыто",
+  "сохраняйте спокойствие",
+  "будьте вежливы",
+  "это зависит от",
+];
 
+const RETRY_INSTRUCTION = `Your previous attempt was rejected for being too generic or incomplete. Rewrite it from scratch.
+Hard requirements: exactly 3 distinct replies, each at least two full sentences and immediately sendable; every reported pattern carries a verbatim quote from the intercepted message; no generic advice of any kind. If the message truly contains no manipulation, return threat_level "clear" with zero patterns and three replies that simply close the matter well.`;
+
+function normalize(value: string): string {
+  return value.toLowerCase().replace(/[\s"'“”«»„,.!?;:()\-—]+/g, " ").trim();
+}
+
+/** Returns a reason string when the report is not good enough to show. */
+function reportProblem(result: ScanResult, sourceText: string | null): string | null {
+  if (!result.headline?.trim()) return "missing headline";
+  if (!result.motive?.trim() || !result.weak_point?.trim()) return "missing motive or weak point";
+
+  const replies = result.replies ?? [];
+  if (replies.length < 3) return "fewer than three replies";
+  for (const reply of replies) {
+    if (!reply.text || reply.text.trim().length < 60) return "reply too short";
+  }
+  const unique = new Set(replies.map((r) => normalize(r.text)));
+  if (unique.size < replies.length) return "duplicate replies";
+
+  const haystack = normalize(
+    [result.headline, result.motive, result.weak_point, ...replies.map((r) => r.text)].join(" "),
+  );
+  for (const phrase of BANNED_PHRASES) {
+    if (haystack.includes(normalize(phrase))) return `generic phrase: ${phrase}`;
+  }
+
+  // Quotes are only verifiable when we analysed pasted text (not a screenshot).
+  if (sourceText) {
+    const source = normalize(sourceText);
+    for (const pattern of result.patterns ?? []) {
+      if (!pattern.quote?.trim()) return "pattern without a quote";
+      if (!source.includes(normalize(pattern.quote))) return "quote not found in the message";
+    }
+  }
+  return null;
+}
+
+async function requestReport(
+  input: AnalyzeInput,
+  apiKey: string,
+  extraInstruction: string | null,
+): Promise<ScanResult> {
   const content: Array<Record<string, unknown>> = [
     {
       type: "input_text",
@@ -119,6 +180,10 @@ export async function analyzeTransmission(input: AnalyzeInput): Promise<ScanResu
       type: "input_text",
       text: "The screenshot is a conversation. Right-aligned / colored bubbles are usually the USER. Left-aligned / grey bubbles are the SENDER being analyzed. Analyze the SENDER's messages.",
     });
+  }
+
+  if (extraInstruction) {
+    content.push({ type: "input_text", text: extraInstruction });
   }
 
   const res = await fetch(GATEWAY_URL, {
@@ -193,4 +258,29 @@ export async function analyzeTransmission(input: AnalyzeInput): Promise<ScanResu
   parsed.patterns = (parsed.patterns ?? []).slice(0, 4);
   parsed.replies = (parsed.replies ?? []).slice(0, 3);
   return parsed;
+}
+
+export async function analyzeTransmission(input: AnalyzeInput): Promise<ScanResult> {
+  const apiKey = process.env["LOVABLE_API_KEY"];
+  if (!apiKey) throw new Error("AI is not configured");
+
+  const sourceText = input.text?.trim() ? input.text.trim() : null;
+
+  const first = await requestReport(input, apiKey, null);
+  const problem = reportProblem(first, sourceText);
+  if (!problem) return first;
+
+  // One hard retry rather than showing a weak first decode — that first
+  // impression is the whole product.
+  console.warn(`[unbluff] weak report rejected (${problem}); retrying once`);
+  try {
+    const second = await requestReport(input, apiKey, RETRY_INSTRUCTION);
+    const secondProblem = reportProblem(second, sourceText);
+    if (!secondProblem) return second;
+    console.warn(`[unbluff] retry still weak (${secondProblem}); returning best effort`);
+    return second.replies?.length >= first.replies?.length ? second : first;
+  } catch (e) {
+    console.warn("[unbluff] retry failed", e);
+    return first;
+  }
 }

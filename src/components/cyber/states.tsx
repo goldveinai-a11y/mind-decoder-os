@@ -14,6 +14,8 @@ import {
   ShieldCheck,
   Swords,
   Terminal,
+  ThumbsDown,
+  ThumbsUp,
   UserX,
   X,
 } from "lucide-react";
@@ -22,6 +24,7 @@ import { Panel } from "./Frame";
 import { Radar } from "./Radar";
 import { SCAN_CONTEXTS, CREDIT_PACKS, type ScanContext, type ScanTeaser } from "@/lib/scan-types";
 import { SHOWCASE_SLUGS, TACTICS, getTactic } from "@/lib/tactics";
+import { rateScan } from "@/lib/scan.functions";
 
 const fade = {
   initial: { opacity: 0, y: 12 },
@@ -711,6 +714,8 @@ export function UnlockedState({
   teaser: ScanTeaser;
   onReset: () => void;
 }) {
+  const clean =
+    teaser.threat_level === "clear" && (teaser.patterns ?? []).length === 0;
   return (
     <motion.section key="unlocked" {...fade} className="mx-auto w-full max-w-2xl px-4 pb-20 pt-10">
       <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.25em] text-neon">
@@ -720,6 +725,18 @@ export function UnlockedState({
         Full Behavioral Report
       </h2>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{teaser.headline}</p>
+
+      {clean && (
+        <Panel className="mt-6 p-4">
+          <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-neon">
+            <ShieldCheck className="h-4 w-4" /> no manipulation detected
+          </div>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            This message is clean — there is no hidden play in it. We will not invent one. Use the
+            replies below to close the matter cleanly.
+          </p>
+        </Panel>
+      )}
 
       {teaser.patterns && teaser.patterns.length > 0 && (
         <>
@@ -798,6 +815,48 @@ export function UnlockedState({
       >
         <RadarIcon className="mr-2 inline h-3 w-3" /> Run new interception
       </button>
+
+      <ReportFeedback id={teaser.id} token={teaser.token} />
     </motion.section>
+  );
+}
+
+function ReportFeedback({ id, token }: { id: string; token: string }) {
+  const [sent, setSent] = useState<"accurate" | "off" | null>(null);
+
+  const send = (verdict: "accurate" | "off") => {
+    if (sent) return;
+    setSent(verdict);
+    void rateScan({ data: { id, token, verdict } }).catch(() => undefined);
+  };
+
+  if (sent) {
+    return (
+      <p className="mt-6 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        {sent === "accurate" ? "logged — glad it landed" : "logged — we will tighten this"}
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-6 flex flex-col items-center gap-2">
+      <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        was this decode right?
+      </span>
+      <div className="flex gap-2">
+        <button
+          onClick={() => send("accurate")}
+          className="flex items-center gap-1.5 rounded-sm border border-neon/40 px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-neon transition-colors hover:bg-neon/10"
+        >
+          <ThumbsUp className="h-3 w-3" /> nailed it
+        </button>
+        <button
+          onClick={() => send("off")}
+          className="flex items-center gap-1.5 rounded-sm border border-border px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-muted-foreground transition-colors hover:text-alert"
+        >
+          <ThumbsDown className="h-3 w-3" /> off target
+        </button>
+      </div>
+    </div>
   );
 }
