@@ -14,6 +14,8 @@ import {
   ShieldCheck,
   Swords,
   Terminal,
+  ThumbsDown,
+  ThumbsUp,
   UserX,
   X,
 } from "lucide-react";
@@ -22,6 +24,7 @@ import { Panel } from "./Frame";
 import { Radar } from "./Radar";
 import { SCAN_CONTEXTS, CREDIT_PACKS, type ScanContext, type ScanTeaser } from "@/lib/scan-types";
 import { SHOWCASE_SLUGS, TACTICS, getTactic } from "@/lib/tactics";
+import { rateScan } from "@/lib/scan.functions";
 
 const fade = {
   initial: { opacity: 0, y: 12 },
