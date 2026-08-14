@@ -104,6 +104,35 @@ export type Database = {
         }
         Relationships: []
       }
+      scan_feedback: {
+        Row: {
+          created_at: string
+          id: string
+          scan_id: string
+          verdict: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          scan_id: string
+          verdict: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          scan_id?: string
+          verdict?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scan_feedback_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: true
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scans: {
         Row: {
           access_token: string
