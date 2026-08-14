@@ -106,6 +106,60 @@ type AnalyzeInput = {
   imageDataUrl?: string | null;
 };
 
+/** Phrases that mean the model fell back to generic advice instead of decoding. */
+const BANNED_PHRASES = [
+  "communicate openly",
+  "open communication",
+  "have an honest conversation",
+  "stay calm and",
+  "keep calm and",
+  "it depends on",
+  "as an ai",
+  "i cannot help",
+  "поговорите открыто",
+  "сохраняйте спокойствие",
+  "будьте вежливы",
+  "это зависит от",
+];
+
+const RETRY_INSTRUCTION = `Your previous attempt was rejected for being too generic or incomplete. Rewrite it from scratch.
+Hard requirements: exactly 3 distinct replies, each at least two full sentences and immediately sendable; every reported pattern carries a verbatim quote from the intercepted message; no generic advice of any kind. If the message truly contains no manipulation, return threat_level "clear" with zero patterns and three replies that simply close the matter well.`;
+
+function normalize(value: string): string {
+  return value.toLowerCase().replace(/[\s"'“”«»„,.!?;:()\-—]+/g, " ").trim();
+}
+
+/** Returns a reason string when the report is not good enough to show. */
+function reportProblem(result: ScanResult, sourceText: string | null): string | null {
+  if (!result.headline?.trim()) return "missing headline";
+  if (!result.motive?.trim() || !result.weak_point?.trim()) return "missing motive or weak point";
+
+  const replies = result.replies ?? [];
+  if (replies.length < 3) return "fewer than three replies";
+  for (const reply of replies) {
+    if (!reply.text || reply.text.trim().length < 60) return "reply too short";
+  }
+  const unique = new Set(replies.map((r) => normalize(r.text)));
+  if (unique.size < replies.length) return "duplicate replies";
+
+  const haystack = normalize(
+    [result.headline, result.motive, result.weak_point, ...replies.map((r) => r.text)].join(" "),
+  );
+  for (const phrase of BANNED_PHRASES) {
+    if (haystack.includes(normalize(phrase))) return `generic phrase: ${phrase}`;
+  }
+
+  // Quotes are only verifiable when we analysed pasted text (not a screenshot).
+  if (sourceText) {
+    const source = normalize(sourceText);
+    for (const pattern of result.patterns ?? []) {
+      if (!pattern.quote?.trim()) return "pattern without a quote";
+      if (!source.includes(normalize(pattern.quote))) return "quote not found in the message";
+    }
+  }
+  return null;
+}
+
 export async function analyzeTransmission(input: AnalyzeInput): Promise<ScanResult> {
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!apiKey) throw new Error("AI is not configured");
