@@ -2,7 +2,7 @@ import type Stripe from "stripe";
 import { CREDIT_PACKS, type CreditPackId } from "./scan-types";
 
 export const PACK_PRICE_IDS: Record<CreditPackId, string> = {
-  single: "decode_pack_1_price",
+  single: "decode_pack_3_price",
   ten: "decode_pack_10_price",
   fifty: "decode_pack_50_price",
 };
