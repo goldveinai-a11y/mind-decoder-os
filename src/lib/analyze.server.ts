@@ -160,10 +160,11 @@ function reportProblem(result: ScanResult, sourceText: string | null): string | 
   return null;
 }
 
-export async function analyzeTransmission(input: AnalyzeInput): Promise<ScanResult> {
-  const apiKey = process.env["LOVABLE_API_KEY"];
-  if (!apiKey) throw new Error("AI is not configured");
-
+async function requestReport(
+  input: AnalyzeInput,
+  apiKey: string,
+  extraInstruction: string | null,
+): Promise<ScanResult> {
   const content: Array<Record<string, unknown>> = [
     {
       type: "input_text",
@@ -179,6 +180,10 @@ export async function analyzeTransmission(input: AnalyzeInput): Promise<ScanResu
       type: "input_text",
       text: "The screenshot is a conversation. Right-aligned / colored bubbles are usually the USER. Left-aligned / grey bubbles are the SENDER being analyzed. Analyze the SENDER's messages.",
     });
+  }
+
+  if (extraInstruction) {
+    content.push({ type: "input_text", text: extraInstruction });
   }
 
   const res = await fetch(GATEWAY_URL, {
@@ -253,4 +258,29 @@ export async function analyzeTransmission(input: AnalyzeInput): Promise<ScanResu
   parsed.patterns = (parsed.patterns ?? []).slice(0, 4);
   parsed.replies = (parsed.replies ?? []).slice(0, 3);
   return parsed;
+}
+
+export async function analyzeTransmission(input: AnalyzeInput): Promise<ScanResult> {
+  const apiKey = process.env["LOVABLE_API_KEY"];
+  if (!apiKey) throw new Error("AI is not configured");
+
+  const sourceText = input.text?.trim() ? input.text.trim() : null;
+
+  const first = await requestReport(input, apiKey, null);
+  const problem = reportProblem(first, sourceText);
+  if (!problem) return first;
+
+  // One hard retry rather than showing a weak first decode — that first
+  // impression is the whole product.
+  console.warn(`[unbluff] weak report rejected (${problem}); retrying once`);
+  try {
+    const second = await requestReport(input, apiKey, RETRY_INSTRUCTION);
+    const secondProblem = reportProblem(second, sourceText);
+    if (!secondProblem) return second;
+    console.warn(`[unbluff] retry still weak (${secondProblem}); returning best effort`);
+    return second.replies?.length >= first.replies?.length ? second : first;
+  } catch (e) {
+    console.warn("[unbluff] retry failed", e);
+    return first;
+  }
 }
