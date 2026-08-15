@@ -46,6 +46,7 @@ export function InputState({
   heroBody,
   showcaseSlugs = SHOWCASE_SLUGS,
   chatGptObjection,
+  notice,
 }: {
   onScan: (payload: { text: string; context: ScanContext; imageDataUrl: string | null }) => void;
   error?: string | null;
@@ -56,6 +57,7 @@ export function InputState({
   heroBody?: React.ReactNode;
   showcaseSlugs?: string[];
   chatGptObjection?: React.ReactNode;
+  notice?: React.ReactNode;
 }) {
   const [value, setValue] = useState("");
   const [focused, setFocused] = useState(false);
@@ -135,6 +137,11 @@ export function InputState({
       </div>
 
       <Panel className="mt-4 p-3">
+        {notice && (
+          <p className="mb-2 rounded-sm border border-neon/30 bg-neon/5 px-2 py-1.5 font-mono text-[10px] uppercase leading-4 tracking-widest text-neon">
+            {notice}
+          </p>
+        )}
         <div className="mb-2 flex items-center justify-between border-b border-neon/15 px-1 pb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <Terminal className="h-3 w-3 text-neon" /> input_buffer
@@ -724,9 +731,9 @@ export function UnlockedState({
 }: {
   teaser: ScanTeaser;
   onReset: () => void;
-  signedIn: boolean;
-  onSignIn: () => void;
-  onDecodeReply: () => void;
+  signedIn?: boolean;
+  onSignIn?: () => void;
+  onDecodeReply?: () => void;
 }) {
   const clean =
     teaser.threat_level === "clear" && (teaser.patterns ?? []).length === 0;
@@ -830,14 +837,18 @@ export function UnlockedState({
         <RadarIcon className="mr-2 inline h-3 w-3" /> Run new interception
       </button>
 
-      <button
-        onClick={onDecodeReply}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-sm border border-neon/50 bg-neon/5 px-4 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-neon transition-colors hover:bg-neon/15"
-      >
-        <Swords className="h-3.5 w-3.5" /> They answered? Decode their reply →
-      </button>
+      {onDecodeReply && (
+        <button
+          onClick={onDecodeReply}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-sm border border-neon/50 bg-neon/5 px-4 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-neon transition-colors hover:bg-neon/15"
+        >
+          <Swords className="h-3.5 w-3.5" /> They answered? Decode their reply →
+        </button>
+      )}
 
-      <ShareInvite signedIn={signedIn} onSignIn={onSignIn} className="mt-6" />
+      {onSignIn && (
+        <ShareInvite signedIn={Boolean(signedIn)} onSignIn={onSignIn} className="mt-6" />
+      )}
 
       <ReportFeedback id={teaser.id} token={teaser.token} />
     </motion.section>
