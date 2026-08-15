@@ -21,6 +21,7 @@ import {
 import { Link } from "@tanstack/react-router";
 import { Panel } from "./Frame";
 import { CopyButton } from "./CopyButton";
+import { ShareInvite } from "./ShareInvite";
 import { Radar } from "./Radar";
 import { SCAN_CONTEXTS, CREDIT_PACKS, type ScanContext, type ScanTeaser } from "@/lib/scan-types";
 import { SHOWCASE_SLUGS, TACTICS, getTactic } from "@/lib/tactics";
@@ -717,9 +718,15 @@ function CopyBlock({ text }: { text: string }) {
 export function UnlockedState({
   teaser,
   onReset,
+  signedIn,
+  onSignIn,
+  onDecodeReply,
 }: {
   teaser: ScanTeaser;
   onReset: () => void;
+  signedIn: boolean;
+  onSignIn: () => void;
+  onDecodeReply: () => void;
 }) {
   const clean =
     teaser.threat_level === "clear" && (teaser.patterns ?? []).length === 0;
@@ -822,6 +829,15 @@ export function UnlockedState({
       >
         <RadarIcon className="mr-2 inline h-3 w-3" /> Run new interception
       </button>
+
+      <button
+        onClick={onDecodeReply}
+        className="mt-3 flex w-full items-center justify-center gap-2 rounded-sm border border-neon/50 bg-neon/5 px-4 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-neon transition-colors hover:bg-neon/15"
+      >
+        <Swords className="h-3.5 w-3.5" /> They answered? Decode their reply →
+      </button>
+
+      <ShareInvite signedIn={signedIn} onSignIn={onSignIn} className="mt-6" />
 
       <ReportFeedback id={teaser.id} token={teaser.token} />
     </motion.section>
