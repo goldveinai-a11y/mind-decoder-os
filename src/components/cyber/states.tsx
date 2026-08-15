@@ -268,14 +268,23 @@ function PricingStrip({ onBuy }: { onBuy: (pack: string) => void }) {
         What it costs
       </h2>
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
-        {CREDIT_PACKS.map((p) => (
+        {CREDIT_PACKS.map((p) => {
+          const featured = p.id === "ten";
+          return (
           <button
             key={p.id}
             type="button"
             onClick={() => onBuy(p.id)}
-            className="group block w-full cursor-pointer text-left"
+            className={`group relative block w-full cursor-pointer text-left ${featured ? "pulse-neon rounded-sm" : ""}`}
           >
-            <Panel className="p-4 text-center transition-colors group-hover:bg-neon/10">
+            {featured && (
+              <span className="absolute -top-2 left-1/2 z-10 -translate-x-1/2 rounded-sm border border-neon bg-background px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-neon">
+                best value
+              </span>
+            )}
+            <Panel
+              className={`p-4 text-center transition-colors group-hover:bg-neon/10 ${featured ? "border-neon bg-neon/10" : ""}`}
+            >
               <div className="font-mono text-2xl font-bold text-neon">
                 ${(p.amountCents / 100).toFixed(2)}
               </div>
@@ -290,7 +299,8 @@ function PricingStrip({ onBuy }: { onBuy: (pack: string) => void }) {
               </div>
             </Panel>
           </button>
-        ))}
+          );
+        })}
       </div>
       <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
         3 decodes for $4.99 · your first decode is free · one-time payment · no subscription ·
