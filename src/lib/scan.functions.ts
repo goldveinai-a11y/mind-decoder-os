@@ -9,6 +9,7 @@ import {
   newAccessToken,
   normalizeContext,
   normalizeFingerprint,
+  normalizeReferralCode,
   validateImageDataUrl,
 } from "./scan.server";
 import type { ScanResult, ScanTeaser } from "./scan-types";
