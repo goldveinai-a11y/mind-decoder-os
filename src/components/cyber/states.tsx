@@ -654,18 +654,26 @@ export function PaywallState({
           </button>
         ) : (
           <div className="mt-4 space-y-2">
-            {CREDIT_PACKS.map((p) => (
+            {CREDIT_PACKS.map((p) => {
+              const featured = p.id === "ten";
+              return (
               <button
                 key={p.id}
                 onClick={() => onBuy(p.id)}
                 disabled={busy}
-                className="flex w-full items-center justify-between rounded-sm border border-neon/40 bg-neon/5 px-4 py-3.5 text-left transition-colors hover:bg-neon/15 disabled:opacity-50"
+                className={`flex w-full items-center justify-between rounded-sm px-4 py-3.5 text-left transition-colors disabled:opacity-50 ${
+                  featured
+                    ? "pulse-neon border border-neon bg-neon/15 hover:bg-neon/25"
+                    : "border border-neon/40 bg-neon/5 hover:bg-neon/15"
+                }`}
               >
                 <span className="font-mono text-sm font-bold uppercase tracking-widest text-neon">
                   {p.label}
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  <span
+                    className={`font-mono text-[10px] uppercase tracking-widest ${featured ? "rounded-sm border border-neon px-1.5 py-0.5 text-neon" : "text-muted-foreground"}`}
+                  >
                     {p.note}
                   </span>
                   <span className="font-mono text-sm text-foreground">
@@ -673,10 +681,12 @@ export function PaywallState({
                   </span>
                 </span>
               </button>
-            ))}
+              );
+            })}
             <p className="pt-1 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               one-time payment · no subscription · decodes never expire · money-back guarantee
             </p>
+            <ShareInvite signedIn={signedIn} onSignIn={onSignIn} className="mt-3" />
           </div>
         )}
 
