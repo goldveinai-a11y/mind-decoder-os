@@ -47,6 +47,7 @@ export type Database = {
           credits: number
           email: string | null
           id: string
+          referral_code: string | null
           updated_at: string
         }
         Insert: {
@@ -54,6 +55,7 @@ export type Database = {
           credits?: number
           email?: string | null
           id: string
+          referral_code?: string | null
           updated_at?: string
         }
         Update: {
@@ -61,6 +63,7 @@ export type Database = {
           credits?: number
           email?: string | null
           id?: string
+          referral_code?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -101,6 +104,30 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          id: string
+          ip_hash: string
+          referrer_id: string
+          scan_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_hash: string
+          referrer_id: string
+          scan_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_hash?: string
+          referrer_id?: string
+          scan_id?: string | null
         }
         Relationships: []
       }
@@ -186,6 +213,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_referral: {
+        Args: { p_code: string; p_ip_hash: string; p_scan: string }
+        Returns: string
+      }
+      gen_referral_code: { Args: never; Returns: string }
       grant_purchased_credits:
         | {
             Args: {
