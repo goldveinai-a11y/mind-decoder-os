@@ -21,6 +21,7 @@ import {
 import { Link } from "@tanstack/react-router";
 import { Panel } from "./Frame";
 import { CopyButton } from "./CopyButton";
+import { ShareInvite } from "./ShareInvite";
 import { Radar } from "./Radar";
 import { SCAN_CONTEXTS, CREDIT_PACKS, type ScanContext, type ScanTeaser } from "@/lib/scan-types";
 import { SHOWCASE_SLUGS, TACTICS, getTactic } from "@/lib/tactics";
@@ -45,6 +46,7 @@ export function InputState({
   heroBody,
   showcaseSlugs = SHOWCASE_SLUGS,
   chatGptObjection,
+  notice,
 }: {
   onScan: (payload: { text: string; context: ScanContext; imageDataUrl: string | null }) => void;
   error?: string | null;
@@ -55,6 +57,7 @@ export function InputState({
   heroBody?: React.ReactNode;
   showcaseSlugs?: string[];
   chatGptObjection?: React.ReactNode;
+  notice?: React.ReactNode;
 }) {
   const [value, setValue] = useState("");
   const [focused, setFocused] = useState(false);
@@ -134,6 +137,11 @@ export function InputState({
       </div>
 
       <Panel className="mt-4 p-3">
+        {notice && (
+          <p className="mb-2 rounded-sm border border-neon/30 bg-neon/5 px-2 py-1.5 font-mono text-[10px] uppercase leading-4 tracking-widest text-neon">
+            {notice}
+          </p>
+        )}
         <div className="mb-2 flex items-center justify-between border-b border-neon/15 px-1 pb-2 font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <Terminal className="h-3 w-3 text-neon" /> input_buffer
@@ -268,14 +276,23 @@ function PricingStrip({ onBuy }: { onBuy: (pack: string) => void }) {
         What it costs
       </h2>
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
-        {CREDIT_PACKS.map((p) => (
+        {CREDIT_PACKS.map((p) => {
+          const featured = p.id === "ten";
+          return (
           <button
             key={p.id}
             type="button"
             onClick={() => onBuy(p.id)}
-            className="group block w-full cursor-pointer text-left"
+            className={`group relative block w-full cursor-pointer text-left ${featured ? "pulse-neon rounded-sm" : ""}`}
           >
-            <Panel className="p-4 text-center transition-colors group-hover:bg-neon/10">
+            {featured && (
+              <span className="absolute -top-2 left-1/2 z-10 -translate-x-1/2 rounded-sm border border-neon bg-background px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-widest text-neon">
+                best value
+              </span>
+            )}
+            <Panel
+              className={`p-4 text-center transition-colors group-hover:bg-neon/10 ${featured ? "border-neon bg-neon/10" : ""}`}
+            >
               <div className="font-mono text-2xl font-bold text-neon">
                 ${(p.amountCents / 100).toFixed(2)}
               </div>
@@ -290,7 +307,8 @@ function PricingStrip({ onBuy }: { onBuy: (pack: string) => void }) {
               </div>
             </Panel>
           </button>
-        ))}
+          );
+        })}
       </div>
       <p className="mt-3 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
         3 decodes for $4.99 · your first decode is free · one-time payment · no subscription ·
@@ -644,18 +662,26 @@ export function PaywallState({
           </button>
         ) : (
           <div className="mt-4 space-y-2">
-            {CREDIT_PACKS.map((p) => (
+            {CREDIT_PACKS.map((p) => {
+              const featured = p.id === "ten";
+              return (
               <button
                 key={p.id}
                 onClick={() => onBuy(p.id)}
                 disabled={busy}
-                className="flex w-full items-center justify-between rounded-sm border border-neon/40 bg-neon/5 px-4 py-3.5 text-left transition-colors hover:bg-neon/15 disabled:opacity-50"
+                className={`flex w-full items-center justify-between rounded-sm px-4 py-3.5 text-left transition-colors disabled:opacity-50 ${
+                  featured
+                    ? "pulse-neon border border-neon bg-neon/15 hover:bg-neon/25"
+                    : "border border-neon/40 bg-neon/5 hover:bg-neon/15"
+                }`}
               >
                 <span className="font-mono text-sm font-bold uppercase tracking-widest text-neon">
                   {p.label}
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  <span
+                    className={`font-mono text-[10px] uppercase tracking-widest ${featured ? "rounded-sm border border-neon px-1.5 py-0.5 text-neon" : "text-muted-foreground"}`}
+                  >
                     {p.note}
                   </span>
                   <span className="font-mono text-sm text-foreground">
@@ -663,10 +689,12 @@ export function PaywallState({
                   </span>
                 </span>
               </button>
-            ))}
+              );
+            })}
             <p className="pt-1 text-center font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
               one-time payment · no subscription · decodes never expire · money-back guarantee
             </p>
+            <ShareInvite signedIn={signedIn} onSignIn={onSignIn} className="mt-3" />
           </div>
         )}
 
@@ -697,9 +725,15 @@ function CopyBlock({ text }: { text: string }) {
 export function UnlockedState({
   teaser,
   onReset,
+  signedIn,
+  onSignIn,
+  onDecodeReply,
 }: {
   teaser: ScanTeaser;
   onReset: () => void;
+  signedIn?: boolean;
+  onSignIn?: () => void;
+  onDecodeReply?: () => void;
 }) {
   const clean =
     teaser.threat_level === "clear" && (teaser.patterns ?? []).length === 0;
@@ -802,6 +836,19 @@ export function UnlockedState({
       >
         <RadarIcon className="mr-2 inline h-3 w-3" /> Run new interception
       </button>
+
+      {onDecodeReply && (
+        <button
+          onClick={onDecodeReply}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-sm border border-neon/50 bg-neon/5 px-4 py-3.5 font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-neon transition-colors hover:bg-neon/15"
+        >
+          <Swords className="h-3.5 w-3.5" /> They answered? Decode their reply →
+        </button>
+      )}
+
+      {onSignIn && (
+        <ShareInvite signedIn={Boolean(signedIn)} onSignIn={onSignIn} className="mt-6" />
+      )}
 
       <ReportFeedback id={teaser.id} token={teaser.token} />
     </motion.section>

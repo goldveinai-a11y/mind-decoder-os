@@ -9,6 +9,7 @@ import {
   newAccessToken,
   normalizeContext,
   normalizeFingerprint,
+  normalizeReferralCode,
   validateImageDataUrl,
 } from "./scan.server";
 import type { ScanResult, ScanTeaser } from "./scan-types";
@@ -111,11 +112,14 @@ export const rateScan = createServerFn({ method: "POST" })
 
 /** One free full report per device per day — no account required. */
 export const freeUnlockScan = createServerFn({ method: "POST" })
-  .inputValidator((input: { id: string; token: string; fingerprint: string }) => ({
-    id: input.id,
-    token: input.token,
-    fingerprint: normalizeFingerprint(input.fingerprint),
-  }))
+  .inputValidator(
+    (input: { id: string; token: string; fingerprint: string; referralCode?: string }) => ({
+      id: input.id,
+      token: input.token,
+      fingerprint: normalizeFingerprint(input.fingerprint),
+      referralCode: normalizeReferralCode(input.referralCode),
+    }),
+  )
   .handler(async ({ data }): Promise<ScanTeaser> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: row } = await supabaseAdmin
@@ -155,7 +159,32 @@ export const freeUnlockScan = createServerFn({ method: "POST" })
       .eq("access_token", row.access_token);
     if (unlockError) throw new Error("Could not unlock the report.");
 
+    if (data.referralCode) {
+      await supabaseAdmin.rpc("claim_referral", {
+        p_code: data.referralCode,
+        p_ip_hash: ipHash,
+        p_scan: row.id,
+      });
+    }
+
     return buildTeaser(row.id, row.access_token, result, true);
+  });
+
+/** Personal invite code plus how many friends already converted. */
+export const getReferralInfo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ code: string | null; joined: number; cap: number }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("referral_code")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const { count } = await supabaseAdmin
+      .from("referrals")
+      .select("id", { count: "exact", head: true })
+      .eq("referrer_id", context.userId);
+    return { code: profile?.referral_code ?? null, joined: count ?? 0, cap: 10 };
   });
 
 export const unlockScan = createServerFn({ method: "POST" })

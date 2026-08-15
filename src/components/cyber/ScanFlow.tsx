@@ -83,6 +83,7 @@ const STORE_KEY = "cp_scan";
 const PACK_KEY = "cp_pending_pack";
 const FP_KEY = "cp_device";
 const FREE_KEY = "cp_free_used";
+const REF_KEY = "cp_ref";
 
 function deviceFingerprint(): string {
   let id = localStorage.getItem(FP_KEY);
@@ -114,6 +115,7 @@ export function ScanFlow({ initialContext, heroTitle, heroSubtitle, heroBody }: 
   const [checkoutPack, setCheckoutPack] = useState<string | null>(null);
   const [autoUnlock, setAutoUnlock] = useState(false);
   const [freeAvailable, setFreeAvailable] = useState(false);
+  const [replyMode, setReplyMode] = useState(false);
   const restored = useRef(false);
 
   const refreshCredits = useCallback(async () => {
@@ -136,6 +138,16 @@ export function ScanFlow({ initialContext, heroTitle, heroSubtitle, heroBody }: 
 
   useEffect(() => {
     setFreeAvailable(localStorage.getItem(FREE_KEY) !== "1");
+  }, []);
+
+  // Capture an invite code from ?r=CODE so the referrer gets credited later.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const code = url.searchParams.get("r");
+    if (!code) return;
+    if (/^[A-Fa-f0-9]{8}$/.test(code)) localStorage.setItem(REF_KEY, code.toUpperCase());
+    url.searchParams.delete("r");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}`);
   }, []);
 
   // Resume a pack purchase started before sign-in.
@@ -248,7 +260,12 @@ export function ScanFlow({ initialContext, heroTitle, heroSubtitle, heroBody }: 
     setError(null);
     try {
       const full = await freeUnlockScan({
-        data: { id: teaser.id, token: teaser.token, fingerprint: deviceFingerprint() },
+        data: {
+          id: teaser.id,
+          token: teaser.token,
+          fingerprint: deviceFingerprint(),
+          ...(localStorage.getItem(REF_KEY) ? { referralCode: localStorage.getItem(REF_KEY)! } : {}),
+        },
       });
       localStorage.setItem(FREE_KEY, "1");
       setFreeAvailable(false);
@@ -282,7 +299,18 @@ export function ScanFlow({ initialContext, heroTitle, heroSubtitle, heroBody }: 
     sessionStorage.removeItem(STORE_KEY);
     setTeaser(null);
     setScanDone(false);
+    setReplyMode(false);
     setStage("input");
+  };
+
+  /** Same conflict, next move: decode what they sent back. */
+  const decodeReply = () => {
+    sessionStorage.removeItem(STORE_KEY);
+    setTeaser(null);
+    setScanDone(false);
+    setReplyMode(true);
+    setStage("input");
+    window.scrollTo({ top: 0 });
   };
 
   const returnUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/?paid=1`;
@@ -351,6 +379,9 @@ export function ScanFlow({ initialContext, heroTitle, heroSubtitle, heroBody }: 
               onScan={startScan}
               error={error}
               onBuy={startPurchase}
+              notice={
+                replyMode ? "round 2 — paste what they sent back and we decode their move" : null
+              }
             />
           )}
           {stage === "scanning" && <ScanningState done={scanDone} />}
@@ -368,7 +399,15 @@ export function ScanFlow({ initialContext, heroTitle, heroSubtitle, heroBody }: 
               onFreeUnlock={doFreeUnlock}
             />
           )}
-          {stage === "unlocked" && teaser && <UnlockedState teaser={teaser} onReset={reset} />}
+          {stage === "unlocked" && teaser && (
+            <UnlockedState
+              teaser={teaser}
+              onReset={reset}
+              signedIn={Boolean(session)}
+              onSignIn={() => navigate({ to: "/auth" })}
+              onDecodeReply={decodeReply}
+            />
+          )}
         </AnimatePresence>
       </main>
 

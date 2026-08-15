@@ -31,6 +31,12 @@ export function normalizeFingerprint(value: unknown): string {
   return raw.toLowerCase();
 }
 
+/** Invite codes are 8 uppercase hex chars; anything else is ignored. */
+export function normalizeReferralCode(value: unknown): string | null {
+  const raw = typeof value === "string" ? value.trim().toUpperCase() : "";
+  return /^[A-F0-9]{8}$/.test(raw) ? raw : null;
+}
+
 /** One-way hash of the caller IP — the address itself is never stored. */
 export async function hashClientIp(headers: Headers): Promise<string> {
   const ip =
