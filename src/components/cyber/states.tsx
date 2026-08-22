@@ -26,6 +26,7 @@ import { Radar } from "./Radar";
 import { SCAN_CONTEXTS, CREDIT_PACKS, type ScanContext, type ScanTeaser } from "@/lib/scan-types";
 import { SHOWCASE_SLUGS, TACTICS, getTactic } from "@/lib/tactics";
 import { rateScan } from "@/lib/scan.functions";
+import { trackEvent } from "@/lib/analytics";
 
 const fade = {
   initial: { opacity: 0, y: 12 },
@@ -65,6 +66,8 @@ export function InputState({
   const [image, setImage] = useState<{ name: string; dataUrl: string } | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const inputMethodRef = useRef<"type" | "paste">("type");
+  const startedInputRef = useRef(false);
 
   const pickFile = (file: File | undefined) => {
     if (!file) return;
@@ -76,6 +79,10 @@ export function InputState({
     reader.onload = () => {
       setLocalError(null);
       setImage({ name: file.name, dataUrl: String(reader.result) });
+      if (!startedInputRef.current) {
+        startedInputRef.current = true;
+        trackEvent("decode_input_started", { input_method: "screenshot" });
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -86,6 +93,11 @@ export function InputState({
       return;
     }
     setLocalError(null);
+    trackEvent("decode_submitted", {
+      context,
+      input_method: image ? "screenshot" : inputMethodRef.current,
+      char_count: value.length,
+    });
     onScan({ text: value, context, imageDataUrl: image?.dataUrl ?? null });
   };
 
@@ -124,7 +136,10 @@ export function InputState({
         {SCAN_CONTEXTS.map((c) => (
           <button
             key={c.id}
-            onClick={() => setContext(c.id)}
+            onClick={() => {
+              setContext(c.id);
+              trackEvent("context_selected", { context: c.id });
+            }}
             className={`rounded-sm border px-3 py-1.5 text-center font-mono text-[10px] uppercase tracking-widest transition-colors ${
               context === c.id
                 ? "border-neon bg-neon/15 text-neon"
@@ -153,7 +168,16 @@ export function InputState({
             value={value}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            onChange={(e) => setValue(e.target.value)}
+            onPaste={() => {
+              inputMethodRef.current = "paste";
+            }}
+            onChange={(e) => {
+              setValue(e.target.value);
+              if (!startedInputRef.current && e.target.value) {
+                startedInputRef.current = true;
+                trackEvent("decode_input_started", { input_method: inputMethodRef.current });
+              }
+            }}
             rows={7}
             maxLength={8000}
             placeholder="[Paste intercepted transmission or comment thread...]"
