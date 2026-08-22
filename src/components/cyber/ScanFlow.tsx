@@ -13,7 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { freeUnlockScan, getAccount, getScan, runScan, unlockScan } from "@/lib/scan.functions";
 import { chiptune } from "@/lib/chiptune";
 import { TACTICS } from "@/lib/tactics";
-import type { ScanContext, ScanTeaser } from "@/lib/scan-types";
+import { CREDIT_PACKS, type ScanContext, type ScanTeaser } from "@/lib/scan-types";
+import { trackEvent, trackEcommerce } from "@/lib/analytics";
 
 const SHOWCASE_BY_CONTEXT: Record<ScanContext, string[]> = {
   work: ["false-deadline", "blame-trail", "workplace-gaslighting"],
@@ -84,6 +85,10 @@ const PACK_KEY = "cp_pending_pack";
 const FP_KEY = "cp_device";
 const FREE_KEY = "cp_free_used";
 const REF_KEY = "cp_ref";
+// Set by Checkout.tsx right before Stripe checkout opens; consumed once,
+// after return from payment, to fire the `purchase` event with the right
+// pack/value/transaction id (see the `paid=1` effect below).
+const LAST_CHECKOUT_KEY = "cp_last_checkout";
 
 function deviceFingerprint(): string {
   let id = localStorage.getItem(FP_KEY);
@@ -160,6 +165,7 @@ export function ScanFlow({ initialContext, heroTitle, heroSubtitle, heroBody }: 
   }, [authLoading, session]);
 
   const startPurchase = (pack: string) => {
+    trackEvent("pack_selected", { pack_id: pack });
     if (session) {
       setCheckoutPack(pack);
       return;
@@ -193,7 +199,35 @@ export function ScanFlow({ initialContext, heroTitle, heroSubtitle, heroBody }: 
     void (async () => {
       for (let i = 0; i < 12; i += 1) {
         const c = await refreshCredits();
-        if (c > 0) break;
+        if (c > 0) {
+          // Credits only increase once the Stripe webhook has confirmed and
+          // granted the payment server-side — that confirmation, not the
+          // redirect itself, is what we treat as a real purchase.
+          const raw = sessionStorage.getItem(LAST_CHECKOUT_KEY);
+          if (raw) {
+            sessionStorage.removeItem(LAST_CHECKOUT_KEY);
+            try {
+              const info = JSON.parse(raw) as { pack: string; sessionId: string; value: number };
+              const packInfo = CREDIT_PACKS.find((p) => p.id === info.pack);
+              trackEcommerce("purchase", {
+                currency: "USD",
+                value: info.value,
+                transaction_id: info.sessionId || `pack-${Date.now()}`,
+                items: [
+                  {
+                    item_id: info.pack,
+                    item_name: packInfo?.label ?? info.pack,
+                    price: info.value,
+                    quantity: 1,
+                  },
+                ],
+              });
+            } catch {
+              /* malformed sessionStorage payload — skip tracking, don't block unlock */
+            }
+          }
+          break;
+        }
         await new Promise((r) => setTimeout(r, 1500));
       }
       setBusy(false);
@@ -227,6 +261,10 @@ export function ScanFlow({ initialContext, heroTitle, heroSubtitle, heroBody }: 
         chiptune.stopLoop();
         setTeaser(t);
         setStage("paywall");
+        trackEvent("paywall_viewed", {
+          context: payload.context,
+          tactic_count: t.pattern_names.length,
+        });
       }, wait + 600);
     } catch (e) {
       chiptune.stopLoop();
@@ -244,6 +282,11 @@ export function ScanFlow({ initialContext, heroTitle, heroSubtitle, heroBody }: 
       setTeaser(full);
       setStage("unlocked");
       chiptune.blipSuccess();
+      trackEvent("decode_completed", {
+        tactic_name: full.pattern_names[0] ?? "unknown",
+        tactic_count: full.pattern_names.length,
+        decode_type: "paid",
+      });
       void refreshCredits();
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Could not unlock the report.";
@@ -272,6 +315,11 @@ export function ScanFlow({ initialContext, heroTitle, heroSubtitle, heroBody }: 
       setTeaser(full);
       setStage("unlocked");
       chiptune.blipSuccess();
+      trackEvent("decode_completed", {
+        tactic_name: full.pattern_names[0] ?? "unknown",
+        tactic_count: full.pattern_names.length,
+        decode_type: "free",
+      });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Could not unlock the report.";
       if (msg.includes("FREE_USED")) {
@@ -393,7 +441,10 @@ export function ScanFlow({ initialContext, heroTitle, heroSubtitle, heroBody }: 
               busy={busy}
               error={error}
               onSignIn={() => navigate({ to: "/auth" })}
-              onBuy={(pack) => setCheckoutPack(pack)}
+              onBuy={(pack) => {
+                trackEvent("pack_selected", { pack_id: pack });
+                setCheckoutPack(pack);
+              }}
               onUnlock={doUnlock}
               freeAvailable={freeAvailable}
               onFreeUnlock={doFreeUnlock}
